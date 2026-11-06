@@ -1,0 +1,35 @@
+{
+  "_nota": "tune em semitons: sons acelerados 1,35x (macete do disco em 45 RPM) voltam a altura original com tune -5.196",
+  "slots": {
+    "A1": {
+      "tune": -5.196,
+      "mode": "tune"
+    },
+    "A2": {
+      "tune": -5.196,
+      "mode": "tune"
+    },
+    "A3": {
+      "tune": -5.196,
+      "mode": "tune"
+    },
+    "A4": {
+      "tune": -5.196,
+      "mode": "tune"
+    },
+    "A5": {
+      "tune": -5.196,
+      "mode": "tune"
+    },
+    "A6": {
+      "tune": -5.196,
+      "mode": "tune"
+    },
+    "A7": {
+      "mode": "decay"
+    },
+    "A8": {
+      "mode": "decay"
+    }
+  }
+}

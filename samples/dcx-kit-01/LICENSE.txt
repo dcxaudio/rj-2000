@@ -1,0 +1,17 @@
+DCX Kit 01 - kit padrao do RJ-2000
+DCX Audio - https://github.com/dcxaudio
+
+Todos os sons desta pasta foram sintetizados do zero pelo script
+tools/gerar_kit.py. Nenhum trecho de gravacao de terceiros foi usado.
+
+Licenca: CC0 1.0 Universal (dominio publico)
+https://creativecommons.org/publicdomain/zero/1.0/deed.pt_BR
+
+Voce pode copiar, modificar, distribuir e usar estes sons, inclusive
+comercialmente, sem pedir permissao e sem precisar dar credito.
+
+Formato: WAV, 16 bits, mono, 26.040 Hz.
+
+Banco A: bateria (kick, snare, rimshot, clap, hats)
+Banco B: percussao (ride, toms, conga, shaker, pandeirola, cowbell, snap)
+Banco C: tonal (baixos, rhodes, stabs, metais, pluck)

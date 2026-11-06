@@ -1,0 +1,61 @@
+{
+  "_origem": "FLAC do Boom bap kit do fingerdrum.io convertidos com afconvert -f WAVE -d LEI16",
+  "slots": {
+    "A1": {
+      "src": "A1-kick.wav",
+      "start": "auto",
+      "len": 0.34,
+      "speed": 1.35,
+      "name": "kick-1"
+    },
+    "A2": {
+      "src": "A2-kick.wav",
+      "start": "auto",
+      "len": 0.34,
+      "speed": 1.35,
+      "name": "kick-2"
+    },
+    "A3": {
+      "src": "A3-snare.wav",
+      "start": "auto",
+      "len": 0.34,
+      "speed": 1.35,
+      "name": "snare-1"
+    },
+    "A4": {
+      "src": "A4-snare.wav",
+      "start": "auto",
+      "len": 0.32,
+      "speed": 1.35,
+      "name": "snare-2"
+    },
+    "A5": {
+      "src": "A5-rim.wav",
+      "start": "auto",
+      "len": 0.18,
+      "speed": 1.35,
+      "name": "rim"
+    },
+    "A6": {
+      "src": "A6-clap.wav",
+      "start": "auto",
+      "len": 0.28,
+      "speed": 1.35,
+      "name": "clap"
+    },
+    "A7": {
+      "src": "A7-hh_closed.wav",
+      "start": "auto",
+      "len": 0.14,
+      "speed": 1.0,
+      "name": "hat-fechado"
+    },
+    "A8": {
+      "src": "A8-hh_open.wav",
+      "start": "auto",
+      "len": 0.55,
+      "speed": 1.0,
+      "name": "hat-aberto"
+    }
+  }
+}

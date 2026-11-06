@@ -1,0 +1,45 @@
+{
+  "_nota": "todos acelerados 1,35x (45 RPM): tune -5.196 volta a altura original",
+  "slots": {
+    "B1": {
+      "tune": -5.196,
+      "mode": "tune",
+      "name": "Plangente D#4"
+    },
+    "B2": {
+      "tune": -5.196,
+      "mode": "tune",
+      "name": "Plangente C4"
+    },
+    "B3": {
+      "tune": -5.196,
+      "mode": "tune",
+      "name": "Corta Jaca D#4"
+    },
+    "B4": {
+      "tune": -5.196,
+      "mode": "tune",
+      "name": "Corta Jaca D#3"
+    },
+    "B5": {
+      "tune": -5.196,
+      "mode": "tune",
+      "name": "Cruzes A#4"
+    },
+    "B6": {
+      "tune": -5.196,
+      "mode": "tune",
+      "name": "Cruzes A5"
+    },
+    "B7": {
+      "tune": -5.196,
+      "mode": "tune",
+      "name": "Mariana D#3"
+    },
+    "B8": {
+      "tune": -5.196,
+      "mode": "tune",
+      "name": "Mariana G2"
+    }
+  }
+}

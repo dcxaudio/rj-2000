@@ -1,0 +1,19 @@
+Choro 01 - banco B do RJ-2000 (melodias de exemplo)
+
+Trechos curtos de gravacoes de choro de 1907 a 1913, em dominio publico no
+Brasil (fonograma com mais de 70 anos, Lei 9.610/98 art. 96; compositores
+mortos ha mais de 70 anos, art. 41) e nos EUA (gravacoes anteriores a 1923).
+Arquivos obtidos no Wikimedia Commons (marcados como PD-Brazil-media):
+
+- Corta jaca (Chiquinha Gonzaga, 1847-1935) - Grupo Chiquinha Gonzaga, 1910-12
+  https://commons.wikimedia.org/wiki/File:Corta_jaca_1912.ogg
+- Plangente (Chiquinha Gonzaga) - Grupo Chiquinha Gonzaga, 1912
+  https://commons.wikimedia.org/wiki/File:PLANGENTE_(Chiquinha_Gonzaga)_Grupo_Chiquinha_Gonzaga_1912.ogg
+- Mariana em sarrilho (Irineu de Almeida, 1873-1916) - Grupo do Novo Cordao, 1907
+  https://commons.wikimedia.org/wiki/File:MARIANA_EM_SARRILHO_(Irineu_de_Almeida)_-_Grupo_do_Novo_Cord%C3%A3o_1907.ogg
+- Cruzes, minha prima! (Joaquim Callado, 1848-1880) - Agenor Bens e Arthur Camilo, 1913
+  https://commons.wikimedia.org/wiki/File:Cruzes,_minha_prima!_Agenor_bens_Joaquim_Callado.ogg
+
+Preparacao (tools/cortar_samples.py, cortes.json): trechos de 0,31 s escolhidos
+por analise do sinal, mono, normalizados, acelerados 1,35x (macete dos 45 RPM;
+o app toca com tune -5,2, conforme kit.json). A nota no nome e estimada.

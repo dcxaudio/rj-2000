@@ -1,0 +1,39 @@
+Boom Bap 01 - kit padrao do RJ-2000 (banco A)
+
+Sons tirados do "Boom bap kit" do fingerdrum.io (Re: TUNES):
+https://fingerdrum.io/sample-kits
+
+Licenca: Creative Commons Attribution 4.0 (CC BY 4.0) e CC0 1.0.
+O kit mistura amostras das quatro fontes abaixo. Como nao da para saber de
+qual fonte veio cada arquivo, tratamos o kit inteiro como CC BY 4.0 e
+creditamos todas elas:
+
+- MuldjordKit, de Lars Muldjord (DrumGizmo) - CC BY 4.0
+  https://drumgizmo.org/wiki/doku.php?id=kits:muldjordkit
+- DRSKit, de DrumGizmo e Jes Eiler (DRSDrums) - CC BY 4.0
+  https://drumgizmo.org/wiki/doku.php?id=kits:drskit
+- Virtuosity Drums, de Versilian Studios e Karoryfer Samples - CC0 1.0
+  https://github.com/sfzinstruments/virtuosity_drums
+- VCSL, de Versilian Studios - CC0 1.0
+  https://github.com/sgossner/VCSL
+
+Processamento e montagem do kit: fingerdrum.io (Re: TUNES).
+
+Alteracoes feitas pela DCX Audio para o RJ-2000 (permitidas pela CC BY 4.0):
+convertidos para mono, silencio inicial removido, A1 a A6 acelerados 1,35x
+(o macete do disco em 45 RPM; o app toca com tune -5,2 semitons, conforme
+kit.json) e todos cortados com fade de 25 ms para que os 8 sons caibam nos
+2,5 s de um banco (tools/cortar_samples.py).
+
+CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
+CC0 1.0:   https://creativecommons.org/publicdomain/zero/1.0/
+
+Arquivos:
+A1-kick-1.wav       kick_v1
+A2-kick-2.wav       kick_v2
+A3-snare-1.wav      snare_v1
+A4-snare-2.wav      snare_v2
+A5-rim.wav          rim_v1
+A6-clap.wav         clap_v1
+A7-hat-fechado.wav  hh_closed_v1
+A8-hat-aberto.wav   hh_open_v1

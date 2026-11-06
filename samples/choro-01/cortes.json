@@ -1,0 +1,69 @@
+{
+  "_origem": "OGG do Wikimedia Commons convertidos com afconvert -f WAVE -d LEI16 (corta-jaca.wav, plangente.wav, mariana.wav, cruzes.wav). Os ataques foram achados por analise do sinal; a nota no nome e estimada.",
+  "slots": {
+    "B1": {
+      "src": "plangente.wav",
+      "start": 142.65,
+      "len": 0.31,
+      "speed": 1.35,
+      "name": "plangente-ds4",
+      "normalize": true
+    },
+    "B2": {
+      "src": "plangente.wav",
+      "start": 95.2,
+      "len": 0.31,
+      "speed": 1.35,
+      "name": "plangente-c4",
+      "normalize": true
+    },
+    "B3": {
+      "src": "corta-jaca.wav",
+      "start": 26.39,
+      "len": 0.31,
+      "speed": 1.35,
+      "name": "corta-jaca-ds4",
+      "normalize": true
+    },
+    "B4": {
+      "src": "corta-jaca.wav",
+      "start": 162.82,
+      "len": 0.31,
+      "speed": 1.35,
+      "name": "corta-jaca-ds3",
+      "normalize": true
+    },
+    "B5": {
+      "src": "cruzes.wav",
+      "start": 109.56,
+      "len": 0.31,
+      "speed": 1.35,
+      "name": "cruzes-as4",
+      "normalize": true
+    },
+    "B6": {
+      "src": "cruzes.wav",
+      "start": 147.43,
+      "len": 0.31,
+      "speed": 1.35,
+      "name": "cruzes-a5",
+      "normalize": true
+    },
+    "B7": {
+      "src": "mariana.wav",
+      "start": 126.3,
+      "len": 0.31,
+      "speed": 1.35,
+      "name": "mariana-ds3",
+      "normalize": true
+    },
+    "B8": {
+      "src": "mariana.wav",
+      "start": 81.37,
+      "len": 0.31,
+      "speed": 1.35,
+      "name": "mariana-g2",
+      "normalize": true
+    }
+  }
+}
