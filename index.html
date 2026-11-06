@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RJ-2000 Sampler</title>
+  <meta name="description" content="RJ-2000: sampler e sequenciador de 12 bits no navegador, inspirado no E-mu SP-1200. Projeto open source da DCX Audio.">
+  <meta name="theme-color" content="#cfcbc2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/rj2000.css">
+</head>
+<body>
+  <div class="power" id="power">
+    <button class="power-btn" id="power-btn" type="button">
+      <span class="power-ring"></span>
+      <span class="power-label">LIGAR</span>
+    </button>
+    <p class="power-hint">RJ-2000 &middot; DCX Audio<br>Toque para ligar o som</p>
+  </div>
+
+  <main class="machine" id="machine">
+    <header class="brand">
+      <div class="logo">RJ<span>-</span>2000</div>
+      <div class="tagline">12-BIT SAMPLER &middot; SEQUENCER</div>
+      <div class="maker">DCX AUDIO</div>
+    </header>
+    <div class="stripes" aria-hidden="true"><i></i><i></i><i></i></div>
+
+    <section class="top">
+      <div class="display-block">
+        <div class="display">
+          <div class="led-wrap">
+            <div class="led" id="led">01</div>
+            <div class="led-cap" id="led-cap">SEG</div>
+          </div>
+          <div class="lcd" id="lcd" aria-live="polite">
+            <div class="lcd-line" id="lcd1"></div>
+            <div class="lcd-line" id="lcd2"></div>
+          </div>
+        </div>
+        <div class="keypad" id="keypad">
+          <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button><button data-key="dec" class="k-alt" title="Diminuir">&#9664;</button>
+          <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button><button data-key="inc" class="k-alt" title="Aumentar">&#9654;</button>
+          <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button><button data-key="cancel" class="k-alt" title="Cancelar">NO</button>
+          <button data-key="0" class="k-wide">0</button><button data-key="." title="Ponto decimal">.</button><button data-key="enter" class="k-enter" title="Confirmar">ENTER</button>
+        </div>
+      </div>
+
+      <div class="sections">
+        <div class="section">
+          <h2>PERFORMANCE</h2>
+          <div class="btns">
+            <button data-act="mode-mix" data-led="mix">MIX</button>
+            <button data-act="mode-tune" data-led="tune">TUNE/<br>DECAY</button>
+            <button data-act="mode-mpitch" data-led="mpitch">MULTI<br>PITCH</button>
+            <button data-act="mode-mlevel" data-led="mlevel">MULTI<br>LEVEL</button>
+            <button data-act="bank" class="b-bank">BANK <b id="bank-label">A</b></button>
+          </div>
+        </div>
+        <div class="section">
+          <h2>PROGRAMMING</h2>
+          <div class="btns">
+            <button data-act="p-segment" data-led="segment">SEGMENT</button>
+            <button data-act="song" data-led="song">SONG</button>
+            <button data-act="p-tempo" data-led="tempo">TEMPO</button>
+            <button data-act="p-swing" data-led="swing">SWING</button>
+            <button data-act="p-ac" data-led="ac">AUTO<br>CORRECT</button>
+            <button data-act="p-length" data-led="length">SEGMENT<br>LENGTH</button>
+            <button data-act="p-metronome" data-led="metronome">METRO-<br>NOME</button>
+            <button data-act="p-copy" data-led="copy">COPY</button>
+            <button data-act="erase-seg" class="b-warn">ERASE<br>SEG</button>
+          </div>
+        </div>
+        <div class="section">
+          <h2>SAMPLE</h2>
+          <div class="btns">
+            <button data-act="sample" data-led="sample">SAMPLE</button>
+            <button data-act="load-sound">LOAD<br>SOUND</button>
+            <button data-act="truncate">TRUN-<br>CATE</button>
+            <button data-act="reverse" data-led="reverse">REVERSE</button>
+          </div>
+        </div>
+        <div class="section">
+          <h2>DISK</h2>
+          <div class="btns">
+            <button data-act="save">SAVE</button>
+            <button data-act="load">LOAD</button>
+            <button data-act="export">EXPORT<br>WAV</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="deck">
+      <div class="transport">
+        <button class="t-btn t-run" data-act="run" id="btn-run"><i class="t-led"></i>RUN/<br>STOP</button>
+        <button class="t-btn t-rec" data-act="record" id="btn-rec"><i class="t-led"></i>RECORD</button>
+        <button class="t-btn" data-hold="repeat" id="btn-repeat"><i class="t-led"></i>TAP/<br>REPEAT</button>
+        <button class="t-btn" data-hold="erase" id="btn-erase"><i class="t-led"></i>ERASE</button>
+      </div>
+      <div class="playarea">
+        <div class="mode-strip"><span id="slider-mode-label">MIX</span><span id="sel-label">A1</span></div>
+        <div class="sliders" id="sliders"></div>
+        <div class="pads" id="pads"></div>
+      </div>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button data-tab="grid" class="active">GRADE</button>
+      <button data-tab="sound">SOM</button>
+      <button data-tab="song">SONG</button>
+      <button data-tab="setup">SETUP</button>
+      <button data-tab="help">AJUDA</button>
+    </nav>
+
+    <section class="drawer">
+      <div class="panel active" id="tab-grid">
+        <div class="panel-head">
+          <button class="mini" id="grid-prev">&#9664;</button>
+          <span id="grid-title">SEG 01 &middot; COMPASSO 1/2</span>
+          <button class="mini" id="grid-next">&#9654;</button>
+          <label class="chk"><input type="checkbox" id="grid-follow" checked> seguir</label>
+        </div>
+        <div class="grid" id="grid"></div>
+        <p class="note">Toque nos quadrados para ligar ou desligar uma nota em semicolcheia. O swing atual e aplicado nos contratempos.</p>
+      </div>
+
+      <div class="panel" id="tab-sound">
+        <div class="sound-head">
+          <span class="slot" id="snd-slot">A1</span>
+          <input id="snd-name" maxlength="12" spellcheck="false" aria-label="Nome do som">
+          <span id="snd-secs">0.00 s</span>
+        </div>
+        <canvas id="wave" height="120"></canvas>
+        <div class="trim">
+          <label>INICIO <input type="range" id="trim-start" min="0" max="1000" value="0"></label>
+          <label>FIM <input type="range" id="trim-end" min="0" max="1000" value="1000"></label>
+        </div>
+        <div class="row-btns">
+          <button class="mini" id="snd-play">OUVIR</button>
+          <button class="mini" id="snd-file">CARREGAR ARQUIVO</button>
+          <button class="mini" id="snd-rev">REVERSO</button>
+          <button class="mini warn" id="snd-del">APAGAR SOM</button>
+        </div>
+        <div class="mic">
+          <div class="mic-row">
+            <button class="mini rec" id="mic-btn">LIGAR MICROFONE</button>
+            <div class="meter"><div id="mic-meter"></div><div class="thr" id="mic-thr-mark"></div></div>
+          </div>
+          <label>LIMIAR (comeca a gravar quando o som passa daqui) <input type="range" id="mic-thr" min="1" max="100" value="5"></label>
+          <p class="note" id="mic-status">Grava no slot selecionado, ate o limite de memoria do banco.</p>
+        </div>
+        <div class="memory" id="memory"></div>
+      </div>
+
+      <div class="panel" id="tab-song">
+        <div class="panel-head">
+          <span>SONG MODE: <b id="song-state">DESLIGADO</b></span>
+          <button class="mini" id="song-toggle">LIGAR SONG</button>
+          <button class="mini" id="song-add">+ PASSO</button>
+        </div>
+        <div class="song-list" id="song-list"></div>
+        <p class="note">Cada passo toca um segmento o numero de vezes indicado. Aperte RUN/STOP com o SONG ligado para tocar a musica inteira.</p>
+      </div>
+
+      <div class="panel" id="tab-setup">
+        <div class="setup">
+          <fieldset>
+            <legend>SOM DA MAQUINA</legend>
+            <label>Resolucao <select id="set-bits"><option value="8">8 bits</option><option value="12">12 bits (SP-1200)</option><option value="16">16 bits</option></select></label>
+            <label>Taxa de amostragem <select id="set-rate"><option value="13020">13,02 kHz (lo-fi)</option><option value="26040">26,04 kHz (SP-1200)</option><option value="44100">44,1 kHz (limpo)</option></select></label>
+            <label>Limite de memoria <select id="set-mem"><option value="1">SP-1200 (2,5 s por banco)</option><option value="0">Sem limite</option></select></label>
+            <label>Faixa do TUNE <select id="set-tune"><option value="8">+/- 8 semitons</option><option value="12">+/- 12 semitons</option><option value="24">+/- 24 semitons</option></select></label>
+          </fieldset>
+          <fieldset>
+            <legend>EXTRAS (S950)</legend>
+            <label class="chk"><input type="checkbox" id="set-s950"> Filtro passa-baixa estilo S950 no master</label>
+            <label>Corte do filtro <input type="range" id="set-s950cut" min="0" max="99" value="99"></label>
+            <label>Volume de saida <input type="range" id="set-out" min="-24" max="6" value="0"></label>
+          </fieldset>
+          <fieldset>
+            <legend>CONTROLE</legend>
+            <label class="chk"><input type="checkbox" id="set-dynamic"> Pads sensiveis a forca (MIDI)</label>
+            <button class="mini" id="midi-btn">ATIVAR MIDI</button>
+            <p class="note" id="midi-status">Notas 36-67 tocam os 32 sons (36 = A1). CC 20-27 movem os sliders.</p>
+          </fieldset>
+          <fieldset>
+            <legend>PROJETO</legend>
+            <label>Nome <input id="proj-name" maxlength="20" spellcheck="false"></label>
+            <div class="row-btns">
+              <button class="mini" id="proj-save">SALVAR ARQUIVO</button>
+              <button class="mini" id="proj-open">ABRIR ARQUIVO</button>
+              <button class="mini" id="exp-seg">WAV DO SEGMENTO</button>
+              <button class="mini" id="exp-song">WAV DA SONG</button>
+              <button class="mini warn" id="proj-new">NOVO PROJETO</button>
+            </div>
+            <p class="note">O projeto tambem fica salvo automaticamente neste navegador.</p>
+          </fieldset>
+        </div>
+      </div>
+
+      <div class="panel" id="tab-help">
+        <div class="help">
+          <h3>Comecando</h3>
+          <p>Aperte <b>RUN/STOP</b> para ouvir o padrao de exemplo. Toque os pads para tocar os sons do banco atual e use <b>BANK</b> para trocar entre A, B, C e D.</p>
+          <h3>Gravando</h3>
+          <p>Aperte <b>RECORD</b> e depois <b>RUN/STOP</b>. O que voce tocar entra no segmento, alinhado pelo <b>AUTO CORRECT</b> e com o <b>SWING</b> escolhido. Segure <b>ERASE</b> e um pad para apagar aquele som enquanto o padrao toca. Segure <b>TAP/REPEAT</b> e um pad para repetir a nota no ritmo da grade. Toque <b>TAP/REPEAT</b> sozinho no tempo da musica para definir o andamento.</p>
+          <h3>Parametros</h3>
+          <p>Aperte um botao de PROGRAMMING (TEMPO, SWING, SEGMENT...), depois use as setas ou digite no teclado numerico e confirme com <b>ENTER</b>. <b>NO</b> cancela.</p>
+          <h3>Sliders</h3>
+          <p><b>MIX</b>: volume de cada canal. <b>TUNE/DECAY</b>: afinacao ou decaimento dos sons do banco (aperte de novo para alternar). <b>MULTI PITCH</b> e <b>MULTI LEVEL</b>: espalham o ultimo som tocado pelos 8 pads, com afinacoes ou volumes diferentes.</p>
+          <h3>Teclado do computador</h3>
+          <p>Pads: <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> &middot; Bancos: <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> &middot; Run/Stop: <kbd>Espaco</kbd> &middot; Record: <kbd>R</kbd> &middot; Repeat (segurar): <kbd>T</kbd> &middot; Erase (segurar): <kbd>Backspace</kbd> &middot; Numeros, <kbd>Enter</kbd>, <kbd>Esc</kbd>, <kbd>-</kbd> e <kbd>+</kbd> no teclado numerico.</p>
+          <p>Arraste um arquivo de audio sobre um pad para carregar o som nele.</p>
+          <p class="note">Manual completo em <a href="https://github.com/dcxaudio/rj-2000/blob/main/docs/manual.md" target="_blank" rel="noopener">docs/manual.md</a>. Codigo em <a href="https://github.com/dcxaudio/rj-2000" target="_blank" rel="noopener">github.com/dcxaudio/rj-2000</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>RJ-2000 v0.0 &middot; DCX Audio &middot; Duque de Caxias, RJ</span>
+      <span>Open source (GPL-3.0) &middot; inspirado no E-mu SP-1200</span>
+    </footer>
+  </main>
+
+  <input type="file" id="file-sound" accept="audio/*,.wav,.aif,.aiff,.mp3,.ogg,.flac" hidden>
+  <input type="file" id="file-project" accept=".json,.rj2000,application/json" hidden>
+
+  <script src="js/kit.js"></script>
+  <script src="js/dsp.js"></script>
+  <script src="js/project.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/sequencer.js"></script>
+  <script src="js/io.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
