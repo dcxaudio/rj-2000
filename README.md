@@ -18,6 +18,7 @@ O RJ-2000 segue o painel e o fluxo de trabalho do SP-1200: quase tudo passa por 
 - **Disk:** salva e carrega sequências e sons em arquivos separados, e carrega samples WAV, AIFF, MP3, OGG e FLAC em qualquer pad. O estado também fica salvo no navegador.
 - **Teclado do computador e MIDI** (Chrome e Edge), com **MIDI Learn**: qualquer controle do SP e do RJ-950 aprende um pad, knob ou fader do seu controlador.
 - **RJ-950 embaixo do SP:** um sampler de rack inspirado no **Akai S950**, como no estúdio dos anos 80 e 90. Os pads do SP tocam os samples longos do 950 (até 48 s), com início, fim, loop, tune, reverse e filtro passa-baixa. LCD de 2 x 40, knob Control e disquete para soltar arquivos.
+- **RJ-42 embaixo do 950:** um looper de rack que não existiu na época. Solte uma música, ele acha o BPM, e você tira loops de 1, 2, 4 ou 8 compassos no tempo que quiser (mudando o tom junto ou mantendo), guarda até 8 e manda para o SP, para o 950 ou para WAV/MP3.
 
 ## Como usar
 
@@ -37,6 +38,7 @@ js/project.js       sons, memória, segmentos, songs, mixes, arquivos
 js/io.js            microfone e MIDI
 js/midimap.js       MIDI Learn: mapa de mensagens MIDI para os controles
 js/s950.js          RJ-950: sampler de rack, memória, vozes, filtro e páginas
+js/r42.js           RJ-42: looper, detecção de BPM, time stretch, memórias e envio
 js/app.js           painel, LCD e páginas (Set-up, Disk, Sample)
 js/kit.js           kit padrão embutido (gerado)
 samples/boom-bap-01 kit padrão (banco A), WAV, CC BY 4.0 / CC0

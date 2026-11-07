@@ -2,6 +2,8 @@
 
 ## Próxima
 
+- Novo **RJ-42**, looper de rack embaixo do RJ-950: solte uma música, ele acha o BPM e o primeiro tempo forte, e você tira loops de 1, 2, 4 ou 8 compassos no tempo que quiser (Vari-Speed muda o tom junto, Stretch mantém o tom). Set In no tempo forte, jog Search (com Fine para ajuste de 1 ms e zoom no LCD), Nudge e clique na forma de onda para achar o começo; 8 memórias; envio para um pad do RJ-2000, para o RJ-950 ou para arquivo WAV/MP3. Tudo aprende MIDI.
+- RJ-42: detecção de tempo nova (fluxo espectral, autocorrelação generalizada e trem de pulsos), que acertou 35 de 51 samples de teste contra 19 da primeira versão, e batidas achadas uma a uma (programação dinâmica): o loop fecha no tempo daquele trecho, mesmo em disco que acelera e freia. Tap Tempo com 4 toques trava no tempo exato; Nudge anda pelas batidas.
 - RJ-950: envelope de volume (VCA) por sample, em Edit Sample página 6: ATTACK, DECAY, SUSTAIN e RELEASE. O RELEASE entra ao soltar o pad ou quando o som é cortado; em OFF (o padrão) o sample segue one shot, como antes.
 - Disk 9 (New) começa tudo limpo: pads vazios em todos os bancos, sem o kit padrão, que só vem no primeiro boot.
 - MIDI Learn desliga o mapa padrão: com qualquer controle aprendido, as notas 36 a 67 e os CC 20 a 27 param de valer, para teclas, Shift e knobs do controlador não mexerem em nada sem querer. Clear MIDI Learn volta ao mapa padrão.

@@ -39,6 +39,8 @@ window.RJ = window.RJ || {};
       this.engine.levelOf = s => this.levelOf(s);
       // o rack que fica embaixo: recebe as notas dos pads, como pelo MIDI
       this.s950 = new RJ.S950(this);
+      // o looper, mais embaixo: tira loops de musicas e manda para o SP ou para o 950
+      this.r42 = new RJ.R42(this);
 
       this.bank = 0;
       this.perf = "mix";       // mix | tune | multi
@@ -72,6 +74,7 @@ window.RJ = window.RJ || {};
       this.bindUI();
       this.bindKeyboard();
       this.s950.build();
+      this.r42.build();
       this.renderLEDs();
       this.lcd("", "");
     }
@@ -82,6 +85,7 @@ window.RJ = window.RJ || {};
       this.engine.ensure();
       $("#power").classList.add("off");
       this.s950.boot();             // o RJ-950 liga junto (mesma regua de tomadas)
+      this.r42.boot();
       this.learn.load().then(() => { if (this.learn.enabled) this.enableMidi(); });
       const wait = ms => new Promise(r => setTimeout(r, ms));
       this.lcd(" RJ-2000  " + VERSION, " Insert Diskette");
@@ -231,7 +235,7 @@ window.RJ = window.RJ || {};
       // no console do navegador (nivel Verbose): RJ.midiLog() devolve o registro inteiro
       RJ.midiLog = () => this.midiLog.join("\n");
 
-      document.addEventListener("visibilitychange", () => { if (document.hidden) { this.saveNow(); this.s950.saveNow(); } });
+      document.addEventListener("visibilitychange", () => { if (document.hidden) { this.saveNow(); this.s950.saveNow(); this.r42.saveNow(); } });
     }
 
     bindFader(i) {
