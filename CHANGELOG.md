@@ -2,6 +2,8 @@
 
 ## Próxima
 
+- RJ-950: envelope de volume (VCA) por sample, em Edit Sample página 6: ATTACK, DECAY, SUSTAIN e RELEASE. O RELEASE entra ao soltar o pad ou quando o som é cortado; em OFF (o padrão) o sample segue one shot, como antes.
+- Disk 9 (New) começa tudo limpo: pads vazios em todos os bancos, sem o kit padrão, que só vem no primeiro boot.
 - MIDI Learn desliga o mapa padrão: com qualquer controle aprendido, as notas 36 a 67 e os CC 20 a 27 param de valer, para teclas, Shift e knobs do controlador não mexerem em nada sem querer. Clear MIDI Learn volta ao mapa padrão.
 - MIDI Learn: knob ou fader comum ligado a um slider não faz mais o valor pular para a posição do controlador. O slider sai de onde está e os dois se encontram na ponta (value scaling).
 - SET-UP 23 > Save MIDI Learn e Load MIDI Learn: guardar e carregar o mapa do controlador num arquivo.

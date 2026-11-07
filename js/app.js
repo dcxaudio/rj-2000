@@ -220,7 +220,7 @@ window.RJ = window.RJ || {};
       this.sampler.onDone = (raw, rate, peak) => this.sampleDone(raw, rate, peak);
 
       this.midi.onMessage = d => this.on && this.learn.handle(d);
-      this.midi.onNote = (n, vel, on) => { if (on && this.on) this.hitSound(n, { vel: this.p.dynamic ? vel : 1 }); };
+      this.midi.onNote = (n, vel, on) => { if (!this.on) return; if (on) this.hitSound(n, { vel: this.p.dynamic ? vel : 1 }); else this.s950.noteOff(n); };
       this.midi.onSlider = (i, v) => { if (this.on) this.faderInput(i, v); };
       this.midi.onChange = ins => { this.midiStatus = ins.length ? fit(ins[0], 16) : "No MIDI Input"; this.renderLCD(); };
       this.learn.onChange = () => this.renderLCD();
@@ -356,6 +356,7 @@ window.RJ = window.RJ || {};
       const s = this.heldPads.get(i);
       this.heldPads.delete(i);
       if (s == null) return;
+      this.s950.noteOff(s);
       this.seq.repeatPads.delete(s);
       this.seq.erasing.delete(s);
     }
@@ -1328,16 +1329,14 @@ window.RJ = window.RJ || {};
     }
 
     /**
-     * DISK 9: comecar do zero, como ao ligar a maquina pela primeira vez: kit padrao
-     * nos pads e segmentos, songs e mixes vazios. Canal MIDI e tempo de sample ficam.
+     * DISK 9: comecar do zero, tudo limpo: pads vazios em todos os bancos (o kit
+     * padrao so vem no primeiro boot) e segmentos, songs e mixes vazios. Canal MIDI
+     * e tempo de sample ficam.
      */
-    async newProject() {
+    newProject() {
       if (this.seq.playing) this.seq.stop();
       const keep = { midi: Object.assign({}, this.p.midi), memory: this.p.memory };
       this.useProject(Object.assign(RJ.createProject(), keep));
-      this.lcd("New Project", "Loading Sounds");
-      this.flashUntil = performance.now() + 60000;
-      await RJ.loadDefaultKit(this.p, this.engine.ctx);
       this.engine.invalidate();
       this.engine.applyVolumes();
       this.flashUntil = 0;

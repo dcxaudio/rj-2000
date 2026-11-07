@@ -153,7 +153,7 @@ No navegador, o disquete é um arquivo no seu computador. Como na máquina, sequ
 | 4 | Load Segment #: carrega um segmento de um arquivo de sequências. |
 | 5 | Load Sounds. |
 | 6 | Load Sound #: toque um pad e escolha um arquivo de áudio (igual ao Sample 8). |
-| 9 | New: começa do zero, como ao ligar a máquina pela primeira vez. Pergunta `New Project?`; com Yes, o kit padrão volta para os pads e segmentos, songs e mixes ficam vazios. O canal MIDI e o tempo de sample continuam. Salve antes o que quiser guardar. |
+| 9 | New: começa do zero, tudo limpo. Pergunta `New Project?`; com Yes, os pads de todos os bancos (A a D) ficam vazios, sem o kit padrão, e segmentos, songs e mixes também. O kit padrão só vem na primeira vez que a máquina liga. O canal MIDI e o tempo de sample continuam. Salve antes o que quiser guardar. |
 | 0 | Load Sequences and Sounds: escolha os dois arquivos de uma vez. |
 
 O estado da máquina também fica salvo sozinho no navegador.
@@ -297,6 +297,7 @@ Cada pad do RJ-2000 manda uma nota (A1 = 36 ... D8 = 67), tocado ao vivo ou pelo
 | | 3 | TUNE (±24 semitons), FINE (±50 cents), LEVEL (00 a 99) e REVERSE. |
 | | 4 | FILTER: passa-baixa de 2 polos sem ressonância, como o do S950. 99 = aberto; abaixando, o corte desce até 60 Hz. |
 | | 5 | CUT GROUP: OFF ou 1 a 9. Samples no mesmo grupo cortam um ao outro: tocar um para o que estava soando. A linha 2 mostra quais samples estão no grupo. |
+| | 6 | Envelope do VCA (volume): ATTACK, DECAY, SUSTAIN e RELEASE, de 00 a 99. ATTACK é o tempo para subir, DECAY o tempo para cair até o nível do SUSTAIN, e o som fica no SUSTAIN enquanto o pad está apertado. RELEASE é a cauda depois de soltar o pad. Os tempos vão de 0 a 10 s, mais finos nos valores baixos (10 ≈ 0,01 s, 50 ≈ 1,3 s, 99 = 10 s). Com RELEASE em OFF (o padrão), o sample é one shot: toca inteiro mesmo soltando o pad, como antes. No sequenciador as notas não têm duração (como no SP), então o som fica no SUSTAIN até acabar ou até ser cortado por outra nota ou pelo CUT GROUP, e aí entra o RELEASE. O padrão (00, 00, 99, OFF) soa igual a sem envelope. |
 | Edit Program | | PAD do SP → SMP do 950. |
 | MIDI | | Liga ou desliga a recepção dos pads do SP. |
 | Utility | 1 | COPY: cria uma cópia do sample que usa a mesma memória. Serve para tocar trechos diferentes do mesmo loop em pads diferentes. |
@@ -328,5 +329,5 @@ Para que as fatias toquem por cima umas das outras, deixe CUT GROUP em OFF. Dá 
 
 ### O que ficou de fora do S950
 
-Para simplificar: keygroups e programas múltiplos (aqui é um programa só, um sample por pad), envelopes, LFO, crossfade de loop, time stretch e saídas separadas. O 950 não recebe notas próprias: um controlador MIDI toca os pads do SP (seção 15), e os pads tocam o 950. Os botões e knobs do 950, o Control incluído, aprendem MIDI pelo Learn do SP. O REVERSE não usa o loop.
+Para simplificar: keygroups e programas múltiplos (aqui é um programa só, um sample por pad), o envelope do filtro (só o do VCA, de volume, entrou), LFO, crossfade de loop, time stretch e saídas separadas. O 950 não recebe notas próprias: um controlador MIDI toca os pads do SP (seção 15), e os pads tocam o 950. Os botões e knobs do 950, o Control incluído, aprendem MIDI pelo Learn do SP. O REVERSE não usa o loop.
 
