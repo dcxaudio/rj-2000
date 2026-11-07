@@ -16,7 +16,9 @@
   const two = n => (n < 10 ? "0" : "") + n;
 
   RJ.MidiMap = class {
-    constructor() {
+    /** store: o do host, com o prefixo da pagina ("studio/midimap"). */
+    constructor(store) {
+      this.store = store || RJ.store;
       this.targets = new Map();  // id -> { id, el, name, kind, down, up, get, set, step }
       this.map = {};             // "c:1:82" -> { t: "fader:0", mode: "abs" | "rel64" | "rel2c" }
       this.enabled = false;      // o MIDI ja foi ligado: liga sozinho no proximo boot
@@ -39,14 +41,14 @@
 
     async load() {
       try {
-        const s = await RJ.store.get(STORE_KEY);
+        const s = await this.store.get(STORE_KEY);
         const d = s ? JSON.parse(s) : null;
         if (d && d.map) { this.map = d.map; this.enabled = !!d.enabled; }
       } catch (e) { console.warn("Mapa MIDI ilegivel, comecando vazio", e); }
     }
 
     persist() {
-      try { RJ.store.put(STORE_KEY, JSON.stringify({ v: 1, enabled: this.enabled, map: this.map })); } catch (e) { console.warn(e); }
+      try { this.store.put(STORE_KEY, JSON.stringify({ v: 1, enabled: this.enabled, map: this.map })); } catch (e) { console.warn(e); }
     }
 
     /** Mensagem crua -> { key, type, on, v (0 a 1), raw }. Aftertouch, clock e sysex ficam de fora. */

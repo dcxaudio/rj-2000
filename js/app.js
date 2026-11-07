@@ -29,18 +29,17 @@ window.RJ = window.RJ || {};
   const PROG_NAMES = ["Trigger/Metro", "Repeat/Swing", "Subsong/Copy", "End/Time Sig", "Insert/Length", "Delete/Erase", "TempoChg/AutoCor", "MixChg/StepProg"];
 
   class App {
-    constructor() {
+    /** host: a vista do host (js/host.js). O 950 e o 42 nao sao mais do SP: quem monta a pagina cria os tres. */
+    constructor(host) {
+      this.host = host;
       this.p = RJ.createProject();
-      this.engine = new RJ.Engine(this.p);
+      // o SP entra no limitador comum pela saida dele no host (host.output("rj2000"))
+      this.engine = new RJ.Engine(this.p, host.engine, () => host.output());
       this.seq = new RJ.Sequencer(this.p, this.engine);
       this.sampler = new RJ.Sampler(this.engine);
       this.midi = new RJ.Midi();
-      this.learn = new RJ.MidiMap();
+      this.learn = host.learn;
       this.engine.levelOf = s => this.levelOf(s);
-      // o rack que fica embaixo: recebe as notas dos pads, como pelo MIDI
-      this.s950 = new RJ.S950(this);
-      // o looper, mais embaixo: tira loops de musicas e manda para o SP ou para o 950
-      this.r42 = new RJ.R42(this);
 
       this.bank = 0;
       this.perf = "mix";       // mix | tune | multi
@@ -73,19 +72,18 @@ window.RJ = window.RJ || {};
       }
       this.bindUI();
       this.bindKeyboard();
-      this.s950.build();
-      this.r42.build();
       this.renderLEDs();
       this.lcd("", "");
     }
+
+    /** O host chama ao ligar a regua (host.power()); o 950 e o 42 ligam junto, pelo host. */
+    boot() { return this.powerOn(); }
 
     async powerOn() {
       if (this.on) return;
       this.on = true;
       this.engine.ensure();
       $("#power").classList.add("off");
-      this.s950.boot();             // o RJ-950 liga junto (mesma regua de tomadas)
-      this.r42.boot();
       this.learn.load().then(() => { if (this.learn.enabled) this.enableMidi(); });
       const wait = ms => new Promise(r => setTimeout(r, ms));
       this.lcd(" RJ-2000  " + VERSION, " Insert Diskette");
@@ -94,7 +92,7 @@ window.RJ = window.RJ || {};
       await wait(450);
       let restored = false;
       try {
-        const saved = await RJ.store.get("autosave");
+        const saved = await this.host.store.get("autosave");
         if (saved) { this.useProject(RJ.deserialize(saved)); restored = true; }
       } catch (e) { console.warn("Autosave de outra versao, carregando o kit padrao", e); }
       this.lcd(" RJ-2000  " + VERSION, "Loading Sequences");
@@ -124,7 +122,7 @@ window.RJ = window.RJ || {};
     /* =========================================================== eventos */
 
     bindUI() {
-      $("#power-btn").addEventListener("click", () => this.powerOn());
+      $("#power-btn").addEventListener("click", () => this.host.power());
       const press = (el, down, up) => {
         el.addEventListener("pointerdown", e => {
           e.preventDefault();
@@ -214,17 +212,17 @@ window.RJ = window.RJ || {};
         if (files.length && this.onFiles) this.onFiles(files);
       });
 
-      this.seq.on("transport", () => { if (!this.seq.playing) this.s950.stopAll(); this.renderLEDs(); this.renderLCD(); });
+      this.seq.on("transport", () => { if (!this.seq.playing) this.host.emit("stop"); this.renderLEDs(); this.renderLCD(); });
       this.seq.on("position", pos => { const was = this.pos && this.pos.count; this.pos = pos; if (was && !(pos && pos.count)) this.renderLEDs(); this.renderLCD(); });
       this.seq.on("change", () => this.dirty());
-      this.seq.on("hit", (s, time, vel) => { this.onHit(s, time); this.s950.note(s, time, vel); });
+      this.seq.on("hit", (s, time, vel) => { this.onHit(s, time); this.host.emit("note", s, time, vel); });
       this.seq.on("message", (a, b) => this.flash(a, b));
 
       this.sampler.onLevel = () => { if (this.page && this.page.module === "sample") this.renderLCD(); };
       this.sampler.onDone = (raw, rate, peak) => this.sampleDone(raw, rate, peak);
 
       this.midi.onMessage = d => this.on && this.learn.handle(d);
-      this.midi.onNote = (n, vel, on) => { if (!this.on) return; if (on) this.hitSound(n, { vel: this.p.dynamic ? vel : 1 }); else this.s950.noteOff(n); };
+      this.midi.onNote = (n, vel, on) => { if (!this.on) return; if (on) this.hitSound(n, { vel: this.p.dynamic ? vel : 1 }); else this.host.emit("noteOff", n); };
       this.midi.onSlider = (i, v) => { if (this.on) this.faderInput(i, v); };
       this.midi.onChange = ins => { this.midiStatus = ins.length ? fit(ins[0], 16) : "No MIDI Input"; this.renderLCD(); };
       this.learn.onChange = () => this.renderLCD();
@@ -235,7 +233,7 @@ window.RJ = window.RJ || {};
       // no console do navegador (nivel Verbose): RJ.midiLog() devolve o registro inteiro
       RJ.midiLog = () => this.midiLog.join("\n");
 
-      document.addEventListener("visibilitychange", () => { if (document.hidden) { this.saveNow(); this.s950.saveNow(); this.r42.saveNow(); } });
+      // salvar ao esconder a aba agora e do host (saveAll), para todos os aparelhos
     }
 
     bindFader(i) {
@@ -289,7 +287,7 @@ window.RJ = window.RJ || {};
       const bankKeys = ["KeyZ", "KeyX", "KeyC", "KeyV"];
       window.addEventListener("keydown", e => {
         if (e.metaKey || e.ctrlKey || e.altKey) return;
-        if (!this.on) { if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); this.powerOn(); } return; }
+        if (!this.on) { if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); this.host.power(); } return; }
         // no MIDI Learn: Enter salva, Delete apaga o do controle escolhido, Esc sai
         if (this.learn.learning) {
           if (e.code === "Tab") return;
@@ -300,8 +298,8 @@ window.RJ = window.RJ || {};
           else if ((e.code === "Backspace" || e.code === "Delete") && this.learn.sel) { const n = this.learn.clear(this.learn.sel); if (n) this.flash("Cleared", n, 1000); }
           return;
         }
-        // depois de um clique no RJ-950, numeros, setas e Enter vao para ele
-        if (this.s950.focused && this.s950.keyEvent(e)) { e.preventDefault(); return; }
+        // depois de um clique no RJ-950, numeros, setas e Enter vao para ele (pelo host)
+        if (this.host.emit("key", e)) { e.preventDefault(); return; }
         if (this.page && this.page.text && this.page.text(e)) { e.preventDefault(); return; }
         const pi = padKeys.indexOf(e.code);
         if (pi >= 0) { e.preventDefault(); if (!e.repeat) { this.padDown(pi, 1); this.padEl(pi).classList.add("down"); } return; }
@@ -360,7 +358,7 @@ window.RJ = window.RJ || {};
       const s = this.heldPads.get(i);
       this.heldPads.delete(i);
       if (s == null) return;
-      this.s950.noteOff(s);
+      this.host.emit("noteOff", s);
       this.seq.repeatPads.delete(s);
       this.seq.erasing.delete(s);
     }
@@ -1679,10 +1677,16 @@ window.RJ = window.RJ || {};
       this.saveTimer = setTimeout(() => this.saveNow(), 1200);
     }
 
+    /** O que outro aparelho manda com host.send("rj2000", wav): abre o Loop To Pad e espera o pad. */
+    receive(file) {
+      this.openPage(this.selectSound("Loop To Pad", s => { this.exitPage(true); this.loadAudioFiles([file], s); }, "Hit a Pad"), "sample");
+      return "ok";
+    }
+
     saveNow() {
       clearTimeout(this.saveTimer);
       if (!this.on || !this.engine.ready) return;
-      try { RJ.store.put("autosave", RJ.serialize(this.p)); } catch (e) { console.warn(e); }
+      try { this.host.store.put("autosave", RJ.serialize(this.p)); } catch (e) { console.warn(e); }
     }
 
     /* =========================================================== desenho */
@@ -1758,9 +1762,5 @@ window.RJ = window.RJ || {};
   }
 
   RJ.App = App;
-  window.addEventListener("DOMContentLoaded", () => {
-    const app = new App();
-    RJ.app = app;
-    app.build();
-  });
+  // quem cria o SP agora e a pagina (index.html), com o host
 })();

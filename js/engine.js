@@ -21,8 +21,11 @@ RJ.FILTER = {
 };
 
 RJ.Engine = class {
-  constructor(project) {
+  /** output: saida comum do host (RJ.Output); dest: () => no onde o SP entra (host.output). */
+  constructor(project, output, dest) {
     this.project = project;
+    this.output = output || new RJ.Output();
+    this.dest = dest || (() => this.output.limiter);
     this.ctx = null;
     this.graph = null;
     this.cache = new Map();
@@ -31,8 +34,7 @@ RJ.Engine = class {
 
   ensure() {
     if (!this.ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AC({ latencyHint: "interactive" });
+      this.ctx = this.output.ensure();
       this.graph = this.buildGraph(this.ctx);
     }
     if (this.ctx.state === "suspended") this.ctx.resume();
@@ -66,16 +68,9 @@ RJ.Engine = class {
     g.mix.connect(g.out);
     g.met = ctx.createGain();
     g.met.connect(g.out);
-    // saturacao suave so perto de 0 dBFS, para os 8 canais juntos nao estourarem
-    g.limiter = ctx.createWaveShaper();
-    const curve = new Float32Array(2048);
-    for (let i = 0; i < curve.length; i++) {
-      const x = (i / (curve.length - 1)) * 2 - 1, a = Math.abs(x);
-      curve[i] = a < 0.7 ? x : Math.sign(x) * (0.7 + 0.28 * Math.tanh((a - 0.7) / 0.28));
-    }
-    g.limiter.curve = curve;
-    g.out.connect(g.limiter);
-    g.limiter.connect(ctx.destination);
+    // o limitador agora e da saida comum (host.js): o SP entra nele pela saida dele
+    g.limiter = this.output.limiter;
+    g.out.connect(this.dest());
     this.applyVolumes(g);
     return g;
   }

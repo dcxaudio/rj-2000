@@ -377,8 +377,32 @@
   <script src="js/sequencer.js"></script>
   <script src="js/io.js"></script>
   <script src="js/midimap.js"></script>
+  <script src="js/host.js"></script>
   <script src="js/s950.js"></script>
   <script src="js/r42.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    // Esta pagina e o Studio: um host so, com o rack completo. Cada aparelho recebe a vista dele.
+    window.addEventListener("DOMContentLoaded", () => {
+      let sp = null;
+      const studio = new RJ.Host({
+        page: "studio",
+        // primeira abertura: o que estava salvo antes do host vem para o Studio (as antigas ficam)
+        migrate: { autosave: "studio/rj2000/autosave", autosave950: "studio/rj950/autosave", autosave42: "studio/rj42/autosave", midimap: "studio/midimap" },
+        playing: () => sp.seq.playing,
+        padUsed: i => !!sp.p.sounds[i].pcm,
+      });
+      sp = new RJ.App(studio.view("rj2000"));
+      // o rack que fica embaixo: recebe as notas dos pads, como pelo MIDI
+      const s950 = new RJ.S950(studio.view("rj950"));
+      // o looper, mais embaixo: tira loops de musicas e manda para o SP ou para o 950
+      const r42 = new RJ.R42(studio.view("rj42"));
+      studio.add("rj2000", sp, { label: "RJ-2000 pad", receive: f => sp.receive(f) });
+      studio.add("rj950", s950, { label: "RJ-950", receive: f => { if (!s950.on) return "off"; s950.loadFile(f); } });
+      studio.add("rj42", r42, { label: "RJ-42" });
+      sp.build(); s950.build(); r42.build();
+      RJ.studio = studio; RJ.app = sp;
+    });
+  </script>
 </body>
 </html>
