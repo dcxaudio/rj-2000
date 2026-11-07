@@ -117,6 +117,8 @@ RJ.Sampler = class {
  * Assim o banco A de pads de um controlador (36-43) toca o banco A e o
  * banco B do controlador (44-51) toca o banco B.
  * CC 20-27 movem os sliders 1-8 no modo atual.
+ * Depois que qualquer controle aprende uma mensagem, o mapa padrao desliga:
+ * so vale o que foi aprendido, sem conflito.
  */
 RJ.Midi = class {
   constructor() {
@@ -125,6 +127,8 @@ RJ.Midi = class {
     this.onNote = null;
     this.onSlider = null;
     this.onChange = null;
+    this.onLog = null;
+    this.useDefaults = null;
     this.inputs = [];
     this.channel = 1;
     this.omni = true;
@@ -149,19 +153,33 @@ RJ.Midi = class {
     });
   }
 
+  /**
+   * Cada mensagem vai primeiro para o Learn; o que ele nao usar cai no mapa padrao,
+   * que so vale enquanto nada foi aprendido (useDefaults). onLog recebe o destino.
+   */
   handle(d) {
-    if (this.onMessage && this.onMessage(d)) return;
+    if (!d || !d.length || (d[0] & 0xf0) === 0xf0) return; // clock, sysex, active sensing
+    const what = this.route(d);
+    if (this.onLog) this.onLog(d, what);
+  }
+
+  route(d) {
+    const used = this.onMessage && this.onMessage(d);
+    if (used) return used;
     const st = d[0] & 0xf0;
-    if (!this.omni && (d[0] & 0x0f) !== this.channel - 1) return;
+    const isNote = st === 0x90 || st === 0x80, isCC = st === 0xb0;
+    const n = d[1] - 36, i = d[1] - 20;
+    const hit = (isNote && n >= 0 && n < 32) || (isCC && i >= 0 && i < 8);
+    if (!hit) return "Not Mapped";
+    if (this.useDefaults && !this.useDefaults()) return "Off: Has Learn";
+    if (!this.omni && (d[0] & 0x0f) !== this.channel - 1) return "Other Channel";
+    const snd = "ABCD"[n >> 3] + ((n & 7) + 1);
     if (st === 0x90 && d[2] > 0) {
-      const n = d[1] - 36;
-      if (n >= 0 && n < 32 && this.onNote) this.onNote(n, d[2] / 127, true);
-    } else if (st === 0x80 || (st === 0x90 && d[2] === 0)) {
-      const n = d[1] - 36;
-      if (n >= 0 && n < 32 && this.onNote) this.onNote(n, 0, false);
-    } else if (st === 0xb0) {
-      const i = d[1] - 20;
-      if (i >= 0 && i < 8 && this.onSlider) this.onSlider(i, d[2] / 127);
+      if (this.onNote) this.onNote(n, d[2] / 127, true);
+      return "Def: Sound " + snd;
     }
+    if (isNote) { if (this.onNote) this.onNote(n, 0, false); return "Def: " + snd + " Off"; }
+    if (this.onSlider) this.onSlider(i, d[2] / 127);
+    return "Def: Slider " + (i + 1);
   }
 };

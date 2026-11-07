@@ -72,11 +72,36 @@
     handle(d) {
       const m = RJ.MidiMap.parse(d);
       if (!m) return false;
-      if (this.learning) { this.capture(m); return true; }
+      if (this.learning) { this.capture(m); return "Learn: Captured"; }
       const b = this.map[m.key], t = b && this.targets.get(b.t);
       if (!t) return false;
       this.drive(t, b, m);
-      return true;
+      return t.name;
+    }
+
+    /** Algo foi aprendido: o mapa padrao (notas 36-67, CC 20-27) desliga. */
+    get custom() { return Object.keys(this.map).length > 0; }
+
+    /* ----------------------------------------------------- arquivo */
+
+    exportData() { return { format: "rj2000-midilearn", version: 1, map: this.map }; }
+
+    /** Troca o mapa pelo do arquivo. So entram controles que existem. Devolve quantos. */
+    importData(d) {
+      if (!d || d.format !== "rj2000-midilearn" || !d.map || typeof d.map !== "object") throw new Error("Nao e um mapa MIDI");
+      const map = {}, used = new Set();
+      Object.keys(d.map).forEach(k => {
+        const b = d.map[k];
+        if (!/^(n:\d+:\d+|c:\d+:\d+|p:\d+|g:\d+:\d+)$/.test(k) || !b || !this.targets.has(b.t) || used.has(b.t)) return;
+        used.add(b.t);
+        map[k] = { t: b.t, mode: ["abs", "rel64", "rel16", "rel2c"].includes(b.mode) ? b.mode : "abs" };
+        if (b.sure) map[k].sure = true;
+      });
+      this.releaseAll();
+      this.map = map; this.last = {}; this.pos = {}; this.hist = {};
+      this.persist();
+      if (this.onChange) this.onChange();
+      return used.size;
     }
 
     /* ----------------------------------------------------- aprender */

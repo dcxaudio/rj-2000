@@ -106,7 +106,7 @@ Para editar, aperte **Record/Edit**. A linha 1 mostra `Song 00 Step 01` e a linh
 | 19 | Loop/Truncate: toque o pad. Sliders 1 e 2 = início (grosso e fino), 3 e 4 = fim, 5 e 6 = loop. Os valores aparecem em amostras. Enter pergunta `Make Truncation Permanent?`; Yes descarta o resto e libera memória. |
 | 20 | Delete Sound. |
 | 22 | MIDI Learn: ensina mensagens do seu controlador MIDI aos controles do SP e do RJ-950 (seção 15). Também liga o MIDI do navegador. |
-| 23 | Special: setas ou slider 1 percorrem a lista, Enter executa. Clear All Memory, Memory Remaining, Clear Sound Mem, Clear Seq Mem, Copy Sound, Swap Sounds, Default Decay, Name Sound (dá para digitar no teclado do computador), Sample Time (2 = 20 s, o padrão, como na reedição da Rossum; 1 = 10 s como no SP-1200 original, e para isso nenhum banco pode ter mais de 2,5 s), MIDI Channel (canal do mapa MIDI padrão: Omni ou 01 a 16, pelas setas) e Clear MIDI Learn. |
+| 23 | Special: setas ou slider 1 percorrem a lista, Enter executa. Clear All Memory, Memory Remaining, Clear Sound Mem, Clear Seq Mem, Copy Sound, Swap Sounds, Default Decay, Name Sound (dá para digitar no teclado do computador), Sample Time (2 = 20 s, o padrão, como na reedição da Rossum; 1 = 10 s como no SP-1200 original, e para isso nenhum banco pode ter mais de 2,5 s), MIDI Channel (canal do mapa MIDI padrão: Omni ou 01 a 16, pelas setas), MIDI Monitor, Save MIDI Learn, Load MIDI Learn e Clear MIDI Learn (seção 15). |
 
 ## 9. Colocando samples nos pads
 
@@ -217,7 +217,7 @@ Funciona no Chrome, no Edge e no Opera (o Safari não tem MIDI para sites). O MI
 
 ### Mapa padrão
 
-Sem ensinar nada, já funciona assim:
+Sem ensinar nada, já funciona assim (até o primeiro controle aprender algo; veja abaixo):
 
 - **Notas 36 a 67** tocam os 32 sons direto: 36 = A1, 43 = A8, 44 = B1, e assim por diante, qualquer que seja o banco na tela.
 - **CC 20 a 27** movem os sliders 1 a 8 no modo atual.
@@ -244,12 +244,22 @@ Qualquer controle do SP e do RJ-950 aprende uma mensagem do seu controlador: pad
 - Knob sem fim (encoder), como os 8 knobs da MiniLab 3: ele manda passos (por exemplo 65 para um lado e 63 para o outro), não a posição. O Learn percebe isso sozinho, e um knob que foi salvo como comum se corrige nos primeiros toques. Num slider, cada passo anda um pouco, também nos valores em degraus (decay, multi level).
 - Encoder ligado a um botão: cada passo vale um toque (por exemplo, girar o knob troca de banco a cada clique).
 - Botão que manda CC: valor 64 ou mais aperta, menos de 64 solta. Um botão que só manda 127 aperta de novo a cada toque. Pelo MIDI, as setas do SP e o On/Off do 950 andam um passo por toque.
-- O que foi aprendido vale antes do mapa padrão. O mapa do Learn fica salvo no navegador, separado do projeto: abrir outro projeto não muda o seu controlador.
+- **Learn desliga o mapa padrão.** Assim que um controle aprende qualquer mensagem, as notas 36 a 67 e os CC 20 a 27 deixam de valer: só faz algo o que foi aprendido. Isso evita conflito (uma tecla, um Shift ou um knob do controlador que caía no mapa padrão sem você querer). Para voltar ao mapa padrão, SET-UP 23 > Clear MIDI Learn.
+- O mapa do Learn fica salvo no navegador, separado do projeto: abrir outro projeto não muda o seu controlador.
+- **Salvar e carregar o mapa:** SET-UP 23 > Save MIDI Learn baixa um arquivo `rj2000-midi-learn.json`; SET-UP 23 > Load MIDI Learn troca o mapa atual pelo de um arquivo. Serve para guardar o mapa de cada controlador, levar para outro computador ou passar para outra pessoa.
+
+### MIDI Monitor (SET-UP 23)
+
+Mostra no LCD a última mensagem que chegou e para onde ela foi, enquanto a máquina continua tocando normalmente. Serve para descobrir o que o controlador manda e por que algo se mexe sozinho.
+
+- Linha de cima: a mensagem (`Note 36 Ch10`, `CC 27   Ch01`) e o valor. Linha de baixo: o destino. O nome do controle quando foi aprendida, `Def: Sound A1` ou `Def: Slider 8` quando caiu no mapa padrão, `Off: Has Learn` quando cairia no mapa padrão mas ele está desligado, `Not Mapped` quando não faz nada.
+- **Enter** baixa `rj2000-midi-log.txt` com as últimas 500 mensagens (hora, bytes, mensagem, valor e destino).
+- O mesmo registro aparece no console do navegador (nível Verbose, linhas `[MIDI]`), e `RJ.midiLog()` no console devolve tudo.
 
 ### Com a Arturia MiniLab 3
 
 - Os pads mandam as notas 36 a 43, então já tocam o banco A pelo mapa padrão.
-- As teclas também mandam notas, que caem no mapa padrão e disparam sons. Se os pads da sua MiniLab saem num canal diferente das teclas (o comum é o 10), escolha esse canal no SET-UP 23 > MIDI Channel: os pads continuam e as teclas param. Ou ensine os pads pelo Learn.
+- As teclas também mandam notas, que caem no mapa padrão e disparam sons. Se os pads da sua MiniLab saem num canal diferente das teclas (o comum é o 10), escolha esse canal no SET-UP 23 > MIDI Channel: os pads continuam e as teclas param. Ou ensine os pads pelo Learn: com qualquer coisa aprendida, as teclas param de tocar sons.
 - Os knobs e faders mandam outros CCs: ensine pelo Learn os que quiser (sliders, Mix Volume, Gain, o Control do 950...).
 
 ## 16. RJ-950 (o rack embaixo do SP)

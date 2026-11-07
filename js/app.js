@@ -224,6 +224,12 @@ window.RJ = window.RJ || {};
       this.midi.onSlider = (i, v) => { if (this.on) this.faderInput(i, v); };
       this.midi.onChange = ins => { this.midiStatus = ins.length ? fit(ins[0], 16) : "No MIDI Input"; this.renderLCD(); };
       this.learn.onChange = () => this.renderLCD();
+      // o mapa padrao so vale enquanto nada foi aprendido
+      this.midi.useDefaults = () => !this.learn.custom;
+      this.midi.onLog = (d, what) => this.logMidi(d, what);
+      this.midiLog = [];
+      // no console do navegador (nivel Verbose): RJ.midiLog() devolve o registro inteiro
+      RJ.midiLog = () => this.midiLog.join("\n");
 
       document.addEventListener("visibilitychange", () => { if (document.hidden) { this.saveNow(); this.s950.saveNow(); } });
     }
@@ -1184,6 +1190,12 @@ window.RJ = window.RJ || {};
         { n: "Name Sound", go: () => app.openPage(app.selectSound("Name Sound", s => app.openPage(app.namePage(s), "setup")), "setup") },
         { n: "Sample Time", go: () => app.openPage(app.sampleTimePage(), "setup") },
         { n: "MIDI Channel", go: () => app.openPage(app.midiChannelPage(), "setup") },
+        { n: "MIDI Monitor", go: () => app.openPage(app.midiMonitorPage(), "setup") },
+        { n: "Save MIDI Learn", go: () => {
+          if (!app.learn.custom) { app.flash("MIDI Learn", "Is Empty"); return; }
+          app.download(app.learn.exportData(), "rj2000-midi-learn.json"); app.flash("MIDI Learn", "Saved");
+        } },
+        { n: "Load MIDI Learn", go: () => { app.pickFiles(".json", false, fs => app.loadLearnFile(fs)); app.flash("Load MIDI Learn", "Choose File"); } },
         { n: "Clear MIDI Learn", go: () => app.openPage(app.confirmPage("Clear MIDI Learn?", "Yes/No", () => { app.learn.clearAll(); app.flash("MIDI Learn", "Cleared"); }), "setup") },
       ];
       let i = 0;
@@ -1547,6 +1559,55 @@ window.RJ = window.RJ || {};
         this.midiStatus = "MIDI Unavailable";
       }
       this.renderLCD();
+    }
+
+    /**
+     * Registro do que chega pelo MIDI e para onde foi: guarda as ultimas 500
+     * mensagens, manda para o console (nivel Verbose) e atualiza o MIDI Monitor.
+     */
+    logMidi(d, what) {
+      const m = RJ.MidiMap.parse(d);
+      const hex = Array.from(d, b => (b < 16 ? "0" : "") + b.toString(16).toUpperCase()).join(" ");
+      const name = m ? RJ.MidiMap.label(m.key) : hex;
+      const val = m && m.type === "note" ? (m.on ? "on  v" + d[2] : "off") : m && m.type === "cc" ? "val " + d[2] : "";
+      const t = (performance.now() / 1000).toFixed(3);
+      const line = t + "  " + (hex + "        ").slice(0, 9) + "  " + name + "  " + (val + "        ").slice(0, 8) + "  -> " + what;
+      this.midiLog.push(line);
+      if (this.midiLog.length > 500) this.midiLog.shift();
+      console.debug("[MIDI] " + line);
+      this.lastMidi = { name, val, what };
+      if (this.page && this.page.monitor) this.renderLCD();
+    }
+
+    /** SET-UP 23 > MIDI Monitor: a ultima mensagem e para onde ela foi. Enter salva o registro. */
+    midiMonitorPage() {
+      const app = this;
+      return {
+        monitor: true,
+        enter() { app.enableMidi(); },
+        render: () => {
+          const m = app.lastMidi;
+          if (!app.midi.access) return ["MIDI Monitor", app.midiStatus || "Starting MIDI"];
+          if (!m) return ["MIDI Monitor", app.midi.inputs.length ? "Send MIDI..." : "No MIDI Input"];
+          return [fit(m.name, 12) + fit(m.val.replace("val ", "").replace("on  v", ""), 4), m.what];
+        },
+        key(k) {
+          if (k !== "enter") return true;
+          if (!app.midiLog.length) { app.flash("MIDI Monitor", "Log Is Empty"); return; }
+          RJ.dsp.downloadBlob(new Blob([app.midiLog.join("\n") + "\n"], { type: "text/plain" }), "rj2000-midi-log.txt");
+          app.flash("MIDI Log", "Saved");
+        },
+      };
+    }
+
+    /** SET-UP 23 > Load MIDI Learn: troca o mapa pelo de um arquivo salvo antes. */
+    loadLearnFile(files) {
+      const f = files[0];
+      if (!f) return;
+      f.text().then(txt => {
+        const n = this.learn.importData(JSON.parse(txt));
+        this.flash("MIDI Learn", "Loaded " + n);
+      }).catch(() => this.flash("MIDI Learn", "Bad File"));
     }
 
     /** Canal do mapa padrao (notas 36-67 e CC 20-27). O que foi aprendido ja traz o canal. */
