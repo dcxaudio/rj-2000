@@ -69,7 +69,7 @@ RJ.createProject = function () {
     multiPitch: [7, 5, 4, 2, 0, -1, -3, -5],          // esquerda = mais agudo (escala diatonica)
     multiLevel: [0.13, 0.25, 0.38, 0.5, 0.63, 0.75, 0.88, 1],
     swing: 50, ac: 0, metronome: 1,
-    dynamic: false, dynAlloc: false,
+    dynamic: false,
     midi: { channel: 1, mode: "omni" },
     masterVol: 0.75, metVol: 0.5,
     sample: { gain: 0, fine: 0.5, threshold: 0.1, length: 5, slot: 0 },
@@ -242,7 +242,7 @@ RJ.serializeSeq = function (p) {
     songs: p.songs, mix: p.mix, mixes: p.mixes,
     multi: p.multi, multiPitch: p.multiPitch, multiLevel: p.multiLevel,
     swing: p.swing, ac: p.ac, metronome: p.metronome,
-    dynamic: p.dynamic, dynAlloc: p.dynAlloc, midi: p.midi,
+    dynamic: p.dynamic, midi: p.midi,
     masterVol: p.masterVol, metVol: p.metVol, sample: p.sample, memory: p.memory,
     assign: p.sounds.map(s => ({ channel: s.channel, mode: s.mode })),
   };
@@ -260,7 +260,7 @@ RJ.serializeSnd = function (p) {
 
 RJ.applySeq = function (p, d) {
   if (!d || d.format !== "rj2000-seq") throw new Error("Nao e um arquivo de sequencias");
-  ["curSeg", "curSong", "mode", "swing", "ac", "metronome", "dynamic", "dynAlloc", "masterVol", "metVol", "multi", "memory"].forEach(k => { if (d[k] !== undefined) p[k] = d[k]; });
+  ["curSeg", "curSong", "mode", "swing", "ac", "metronome", "dynamic", "masterVol", "metVol", "multi", "memory"].forEach(k => { if (d[k] !== undefined) p[k] = d[k]; });
   if (d.midi) p.midi = Object.assign({}, p.midi, d.midi);
   if (d.sample) p.sample = Object.assign({}, p.sample, d.sample);
   if (d.mix) p.mix = d.mix.slice(0, 32);

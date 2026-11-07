@@ -15,7 +15,7 @@ window.RJ = window.RJ || {};
   const pad2 = n => String(Math.max(0, n | 0)).padStart(2, "0");
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const L = RJ.soundLabel;
-  const VERSION = "b0.2";
+  const VERSION = "b0.3";
   const fmtTempo = t => { const v = Math.round(t * 10) / 10; return String(Math.floor(v)).padStart(3, "0") + "." + Math.round((v % 1) * 10); };
   const BAR = k => String.fromCharCode(0x2581 + clamp(Math.round(k * 7), 0, 7));
   const fit = (s, n = 16) => (s + " ".repeat(n)).slice(0, n);
@@ -23,8 +23,8 @@ window.RJ = window.RJ || {};
   const PROG_SEG = ["metronome", "swing", "copy", "timesig", "length", "erase", "autocorrect", "step"];
   const PROG_SONG = ["trigger", "repeat", "subsong", "end", "insert", "delete", "tempochange", "mixchange"];
 
-  // nomes no LCD do MIDI Learn (o Set-up fica de fora: e por ele que se sai do Learn)
-  const ACT_NAMES = { disk: "Disk", sample: "Sample", tempo: "Tempo", songseg: "Song/Segment", perfmode: "Tune/Mix/Multi", bank: "Bank" };
+  // nomes no LCD do MIDI Learn
+  const ACT_NAMES = { setup: "Set-up", disk: "Disk", sample: "Sample", tempo: "Tempo", songseg: "Song/Segment", perfmode: "Tune/Mix/Multi", bank: "Bank" };
   const KEY_NAMES = { dec: "Key <", inc: "Key >", enter: "Enter", 7: "Key 7/No", 9: "Key 9/Yes" };
   const PROG_NAMES = ["Trigger/Metro", "Repeat/Swing", "Subsong/Copy", "End/Time Sig", "Insert/Length", "Delete/Erase", "TempoChg/AutoCor", "MixChg/StepProg"];
 
@@ -191,11 +191,11 @@ window.RJ = window.RJ || {};
       this.bindKnob($("#knob-gain"), () => this.p.sample.fine, v => { this.p.sample.fine = v; this.applyGain(); this.dirty(); if (this.page && this.page.module === "sample") this.renderLCD(); }, "knob:gain", "Gain");
 
       // no MIDI Learn, tocar num controle escolhe o que ele vai aprender (a funcao nao roda).
-      // O Set-up continua normal: e o jeito de sair do Learn.
+      // Nos seletores (Song/Segment, modo de performance, bancos), as luzes e os nomes valem como o botao.
       const grab = e => {
         if (!this.learn.learning || !e.target.closest || !e.target.closest(".unit")) return;
-        if (e.target.closest("[data-act='setup']")) return;
-        const el = e.target.closest("[data-learn]");
+        const box = e.target.closest(".selector");
+        const el = e.target.closest("[data-learn]") || (box && box.querySelector("[data-learn]"));
         if (e.type === "wheel") { if (el) { e.preventDefault(); e.stopPropagation(); } return; }
         e.preventDefault();
         e.stopPropagation();
@@ -1093,13 +1093,6 @@ window.RJ = window.RJ || {};
           case 20: return app.selectSound("Delete Sound", s => {
             app.openPage(app.confirmPage("Delete " + L(s) + "?", "Yes/No", () => { RJ.clearSound(p, s); app.engine.invalidate(); app.flash(L(s), "Deleted"); app.dirty(); }), "setup");
           });
-          case 21: {
-            const g = app.numField(2), song = RJ.song(p, p.curSong);
-            return {
-              render: () => ["1st Song Step", "Song " + pad2(p.curSong) + " Step " + g.show(song.first || 1)], cursor: () => [1, 13 + g.buf.length],
-              key(k) { if (/^[0-9]$/.test(k) && g.push(k)) { song.first = clamp(parseInt(g.buf, 10), 1, 99); g.clear(); app.dirty(); app.exitPage(); } return true; },
-            };
-          }
           case 22: return app.learnPage();
           case 23: return app.specialPage();
         }
@@ -1190,7 +1183,6 @@ window.RJ = window.RJ || {};
         { n: "Default Decay", go: () => app.openPage(app.defaultDecayPage(), "setup") },
         { n: "Name Sound", go: () => app.openPage(app.selectSound("Name Sound", s => app.openPage(app.namePage(s), "setup")), "setup") },
         { n: "Sample Time", go: () => app.openPage(app.sampleTimePage(), "setup") },
-        { n: "Dynamic Alloc", go: () => app.openPage(app.confirmPage("Dynamic Alloc?", "Yes/No (" + (p.dynAlloc ? "Yes" : "No") + ")", () => { p.dynAlloc = true; app.dirty(); }, () => { p.dynAlloc = false; app.dirty(); }), "setup") },
         { n: "MIDI Channel", go: () => app.openPage(app.midiChannelPage(), "setup") },
         { n: "Clear MIDI Learn", go: () => app.openPage(app.confirmPage("Clear MIDI Learn?", "Yes/No", () => { app.learn.clearAll(); app.flash("MIDI Learn", "Cleared"); }), "setup") },
       ];
@@ -1308,33 +1300,38 @@ window.RJ = window.RJ || {};
             app.flash("Load Sound " + L(s), "Choose File");
             app.renderAll();
           });
-          case 7: return app.catalogPage("seq");
-          case 8: return app.catalogPage("snd");
+          case 9: return app.confirmPage("New Project?", "Yes/No", () => app.newProject());
           case 0: app.pickFiles(".json", true, fs => app.loadFiles(fs, "all")); app.flash("Load Seq & Sounds", "Choose File(s)"); return null;
         }
         return null;
       };
       return {
-        render: () => ["Disk", "Select _ (0-8)"], cursor: () => [1, 7],
+        render: () => ["Disk", "Select _ (0-9)"], cursor: () => [1, 7],
         key(k) {
-          if (/^[0-8]$/.test(k)) { const pg = sub(+k); if (pg) app.openPage(pg, "disk"); else { app.exitPage(true); app.renderAll(); } return; }
+          if (/^[0-69]$/.test(k)) { const pg = sub(+k); if (pg) app.openPage(pg, "disk"); else { app.exitPage(true); app.renderAll(); } return; }
           if (k === "enter") return false;
           return true;
         },
       };
     }
 
-    catalogPage(kind) {
-      const app = this, p = this.p;
-      const list = kind === "seq"
-        ? p.segments.map((s, i) => s && s.events.length ? ["Seg " + pad2(i) + " " + pad2(s.num) + "/" + pad2(s.den), pad2(s.bars) + " Bars " + fmtTempo(s.tempo)] : null).filter(Boolean)
-          .concat(p.songs.map((s, i) => s && s.steps.length ? ["Song " + pad2(i), s.steps.length + " Steps " + fmtTempo(s.tempo)] : null).filter(Boolean))
-        : p.sounds.map((s, i) => s.pcm ? [L(i) + " " + s.name, RJ.soundSeconds(s).toFixed(2) + " Sec Ch " + (s.channel + 1)] : null).filter(Boolean);
-      let i = 0;
-      return {
-        render: () => list.length ? list[i] : [kind === "seq" ? "No Sequences" : "No Sounds", ""],
-        key(k) { if (k === "inc" || k === "dec") { i = clamp(i + (k === "inc" ? 1 : -1), 0, Math.max(0, list.length - 1)); return; } return k === "enter" ? false : true; },
-      };
+    /**
+     * DISK 9: comecar do zero, como ao ligar a maquina pela primeira vez: kit padrao
+     * nos pads e segmentos, songs e mixes vazios. Canal MIDI e tempo de sample ficam.
+     */
+    async newProject() {
+      if (this.seq.playing) this.seq.stop();
+      const keep = { midi: Object.assign({}, this.p.midi), memory: this.p.memory };
+      this.useProject(Object.assign(RJ.createProject(), keep));
+      this.lcd("New Project", "Loading Sounds");
+      this.flashUntil = performance.now() + 60000;
+      await RJ.loadDefaultKit(this.p, this.engine.ctx);
+      this.engine.invalidate();
+      this.engine.applyVolumes();
+      this.flashUntil = 0;
+      this.refreshAll();
+      this.flash("New Project", "Ready");
+      this.dirty();
     }
 
     download(obj, name) {
@@ -1598,6 +1595,9 @@ window.RJ = window.RJ || {};
     learnTouch(id) {
       const L = this.learn;
       if (id === "key:enter" && L.sel && L.cand) { this.learnEnter(); return; }
+      // Set-up sai do Learn quando nada esta escolhido (ou quando ele mesmo ja estava escolhido).
+      // Para ensinar o Set-up: escolha outro controle antes e depois toque no Set-up.
+      if (id === "act:setup" && !L.cand && (!L.sel || L.sel === "act:setup")) { this.exitPage(); return; }
       L.select(id);
       this.flashUntil = 0;
       this.renderLCD();

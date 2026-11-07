@@ -1,4 +1,4 @@
-# Manual do RJ-2000 (b0.2)
+# Manual do RJ-2000 (b0.3)
 
 O RJ-2000 segue o painel e o fluxo de trabalho do E-mu SP-1200. Quase tudo passa pelo LCD de 2 linhas e 16 caracteres: você aperta um botão, digita um número e confirma. As mensagens do LCD ficam em inglês, como na máquina original.
 
@@ -105,9 +105,8 @@ Para editar, aperte **Record/Edit**. A linha 1 mostra `Song 00 Step 01` e a linh
 | 18 | Decay/Tune Select: toque um pad, 1 = Tune, 2 = Decay. |
 | 19 | Loop/Truncate: toque o pad. Sliders 1 e 2 = início (grosso e fino), 3 e 4 = fim, 5 e 6 = loop. Os valores aparecem em amostras. Enter pergunta `Make Truncation Permanent?`; Yes descarta o resto e libera memória. |
 | 20 | Delete Sound. |
-| 21 | 1st Song Step: em que passo a song começa. |
 | 22 | MIDI Learn: ensina mensagens do seu controlador MIDI aos controles do SP e do RJ-950 (seção 15). Também liga o MIDI do navegador. |
-| 23 | Special: setas ou slider 1 percorrem a lista, Enter executa. Clear All Memory, Memory Remaining, Clear Sound Mem, Clear Seq Mem, Copy Sound, Swap Sounds, Default Decay, Name Sound (dá para digitar no teclado do computador), Sample Time (2 = 20 s, o padrão, como na reedição da Rossum; 1 = 10 s como no SP-1200 original, e para isso nenhum banco pode ter mais de 2,5 s), Dynamic Alloc, MIDI Channel (canal do mapa MIDI padrão: Omni ou 01 a 16, pelas setas) e Clear MIDI Learn. |
+| 23 | Special: setas ou slider 1 percorrem a lista, Enter executa. Clear All Memory, Memory Remaining, Clear Sound Mem, Clear Seq Mem, Copy Sound, Swap Sounds, Default Decay, Name Sound (dá para digitar no teclado do computador), Sample Time (2 = 20 s, o padrão, como na reedição da Rossum; 1 = 10 s como no SP-1200 original, e para isso nenhum banco pode ter mais de 2,5 s), MIDI Channel (canal do mapa MIDI padrão: Omni ou 01 a 16, pelas setas) e Clear MIDI Learn. |
 
 ## 9. Colocando samples nos pads
 
@@ -154,8 +153,7 @@ No navegador, o disquete é um arquivo no seu computador. Como na máquina, sequ
 | 4 | Load Segment #: carrega um segmento de um arquivo de sequências. |
 | 5 | Load Sounds. |
 | 6 | Load Sound #: toque um pad e escolha um arquivo de áudio (igual ao Sample 8). |
-| 7 | Catalog Sequences: lista segmentos e songs (setas). |
-| 8 | Catalog Sounds: lista os sons, a duração e o canal. |
+| 9 | New: começa do zero, como ao ligar a máquina pela primeira vez. Pergunta `New Project?`; com Yes, o kit padrão volta para os pads e segmentos, songs e mixes ficam vazios. O canal MIDI e o tempo de sample continuam. Salve antes o que quiser guardar. |
 | 0 | Load Sequences and Sounds: escolha os dois arquivos de uma vez. |
 
 O estado da máquina também fica salvo sozinho no navegador.
@@ -190,7 +188,8 @@ O RJ-2000 segue o original o mais perto possível. Estas são as mudanças que f
 | Cortes | Cortes secos, que podem estalar. | Fade curto no fim de som cortado. |
 | Sampler junto | O S950 era um aparelho à parte, ligado por cabo MIDI. | O RJ-950 já vem embaixo, ligado aos pads (seção 16). |
 | Sync | Internal, MIDI clock, SMPTE e Click. | Saiu: o RJ-2000 é sempre o relógio (seção 11). |
-| Disk 9 | Format/Copy Software, para disquetes. | Saiu: não há disquete para formatar. |
+| Disk 9 | Format/Copy Software, para disquetes. | Virou New: começa um projeto do zero (seção 10). |
+| Opções pouco usadas | Disk 7 e 8 (Catalog), SET-UP 21 (1st Song Step) e Special > Dynamic Alloc. | Saíram. A song sempre começa no passo 1, e cada som sai sempre no canal escolhido no SET-UP 17. |
 | MIDI | SET-UP 22 com canal e Omni/Poly; notas fixas para os sons. | SET-UP 22 é o MIDI Learn, para qualquer controle do SP e do RJ-950. O mapa fixo continua, e o canal dele foi para o SET-UP 23 > MIDI Channel (seção 15). |
 | Cores | Painel cinza. | Painel preto (#1c1c1c), com o mesmo LCD verde. |
 
@@ -230,19 +229,21 @@ Sem ensinar nada, já funciona assim:
 Qualquer controle do SP e do RJ-950 aprende uma mensagem do seu controlador: pads, sliders, knobs, os botões dos módulos, o teclado numérico, Programming, transporte e o knob Control do 950.
 
 1. Abra o SET-UP 22. O LCD mostra `MIDI Learn` / `Touch a Control`, e os controles que aprendem ganham um contorno tracejado.
-2. Toque no controle que você quer. Ele acende em azul e o LCD mostra o nome dele. No Learn, tocar só escolhe: a função não roda.
+2. Toque no controle que você quer. Ele acende em azul e o LCD mostra o nome dele. No Learn, tocar só escolhe: a função não roda. Nos seletores (Song/Segment, Tune/Decay-Mix-Multi e bancos A a D), tocar nas luzes ou nos nomes ao lado também escolhe o botão.
 3. Mexa no controlador: aperte um pad, gire um knob, mova um fader. A última mensagem que chegar fica no LCD (`Note 36 Ch10`, `CC 82   Ch01`...). Se chegar mais de uma, vale a última.
 4. Aperte **Enter** para salvar. O LCD mostra `Saved`. Depois é só tocar em outro controle e repetir.
-5. Para sair, aperte **Set-up** (ou Esc no teclado do computador).
+5. Para sair, aperte **Set-up** com nada escolhido (logo depois de salvar, por exemplo), ou Esc no teclado do computador.
 
 - Cada controle guarda uma mensagem, e cada mensagem vale para um controle só. Ensinar de novo substitui.
 - Tocar num controle mostra o que ele já aprendeu (`Now CC 82 Ch01`).
 - Para apagar um, escolha o controle e aperte Delete no teclado do computador. Para apagar tudo: SET-UP 23 > Clear MIDI Learn.
-- O Enter do painel salva quando há uma mensagem esperando. Sem mensagem, ele é escolhido para aprender, como os outros botões. O Set-up não aprende: é o caminho para sair.
+- O Enter do painel salva quando há uma mensagem esperando. Sem mensagem, ele é escolhido para aprender, como os outros botões.
+- O Set-up também aprende: escolha outro controle antes e depois toque no Set-up. Tocar no Set-up de novo, sem mandar nada, sai do Learn.
 - Valem notas, CC, pitch bend e program change. Soltar a tecla, aftertouch e clock são ignorados no Learn.
 - Os pads do SP aprendem pela posição (pad 1 a 8 do banco na tela), igual a tocar no pad: seguem o multi mode e as páginas que pedem um pad.
-- Knob sem fim (encoder): o Learn percebe sozinho se ele manda passos ou posição. Gire um pouco antes de apertar Enter.
-- Botão que manda CC: valor 64 ou mais aperta, menos de 64 solta. Pelo MIDI, as setas do SP e o On/Off do 950 andam um passo por toque.
+- Knob sem fim (encoder), como os 8 knobs da MiniLab 3: ele manda passos (por exemplo 65 para um lado e 63 para o outro), não a posição. O Learn percebe isso sozinho, e um knob que foi salvo como comum se corrige nos primeiros toques. Num slider, cada passo anda um pouco, também nos valores em degraus (decay, multi level).
+- Encoder ligado a um botão: cada passo vale um toque (por exemplo, girar o knob troca de banco a cada clique).
+- Botão que manda CC: valor 64 ou mais aperta, menos de 64 solta. Um botão que só manda 127 aperta de novo a cada toque. Pelo MIDI, as setas do SP e o On/Off do 950 andam um passo por toque.
 - O que foi aprendido vale antes do mapa padrão. O mapa do Learn fica salvo no navegador, separado do projeto: abrir outro projeto não muda o seu controlador.
 
 ### Com a Arturia MiniLab 3
@@ -284,6 +285,7 @@ Cada pad do RJ-2000 manda uma nota (A1 = 36 ... D8 = 67), tocado ao vivo ou pelo
 | | 2 | LOOP ON/OFF e AT: o loop vai do ponto AT até o fim. |
 | | 3 | TUNE (±24 semitons), FINE (±50 cents), LEVEL (00 a 99) e REVERSE. |
 | | 4 | FILTER: passa-baixa de 2 polos sem ressonância, como o do S950. 99 = aberto; abaixando, o corte desce até 60 Hz. |
+| | 5 | CUT GROUP: OFF ou 1 a 9. Samples no mesmo grupo cortam um ao outro: tocar um para o que estava soando. A linha 2 mostra quais samples estão no grupo. |
 | Edit Program | | PAD do SP → SMP do 950. |
 | MIDI | | Liga ou desliga a recepção dos pads do SP. |
 | Utility | 1 | COPY: cria uma cópia do sample que usa a mesma memória. Serve para tocar trechos diferentes do mesmo loop em pads diferentes. |
@@ -299,15 +301,18 @@ Cada pad do RJ-2000 manda uma nota (A1 = 36 ... D8 = 67), tocado ao vivo ou pelo
 ### Fatiando um loop entre os pads
 
 1. Solte o loop no disquete. Ele entra como SMP 01 e fica ligado, por exemplo, ao pad C1.
-2. Em Edit Sample, página 1, ajuste ST e END para o primeiro trecho. Toque C1 no SP para ouvir.
-3. Utility > COPY (Ent). A cópia vira o SMP 02, já ligada ao C2, sem gastar memória.
-4. Ajuste ST e END da cópia para o próximo trecho. Repita para os outros pads.
+2. Em Edit Sample, página 5, ponha CUT GROUP em 1. Assim as fatias se cortam, como num sampler de loop: tocar uma fatia para a anterior.
+3. Na página 1, ajuste ST e END para o primeiro trecho. Toque C1 no SP para ouvir.
+4. Utility > COPY (Ent). A cópia vira o SMP 02, já ligada ao C2, no mesmo grupo de corte e sem gastar memória.
+5. Ajuste ST e END da cópia para o próximo trecho. Repita para os outros pads.
+
+Para que as fatias toquem por cima umas das outras, deixe CUT GROUP em OFF. Dá para mudar o grupo de cada fatia depois, na página 5.
 
 ### O som e a memória
 
 - **12 bits**, como o S950. A taxa (RATE) é escolhida ao carregar ou gravar, de 7,5 a 48 kHz (padrão 32 kHz). Taxa mais baixa dá mais tempo e um som mais sujo.
 - **Memória de 2,25 MB**, como um S950 com as duas expansões EXM-006: 48 s a 32 kHz, 38 s a 40 kHz, 32 s a 48 kHz. Arquivo que não cabe é cortado no fim (`MEMORY FULL: END CUT`).
-- **8 vozes.** O mesmo sample disparado de novo corta o anterior; com as 8 ocupadas, a mais antiga para.
+- **8 vozes.** O mesmo sample disparado de novo corta o anterior, e samples no mesmo CUT GROUP se cortam. Com as 8 ocupadas, a mais antiga para.
 - Até 99 samples.
 
 ### O que ficou de fora do S950

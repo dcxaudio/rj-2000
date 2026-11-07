@@ -24,6 +24,8 @@
       this.sel = null;           // controle escolhido para aprender
       this.cand = null;          // { key, vals } ultima mensagem recebida
       this.last = {};            // ultimo valor de cada CC absoluto ligado a um encoder
+      this.pos = {};             // posicao de cada slider ou knob movido por encoder
+      this.hist = {};            // ultimos valores de cada CC salvo como posicao (para achar encoder)
       this.held = new Set();     // botoes apertados pelo MIDI
       this.onChange = null;
     }
@@ -117,22 +119,40 @@
       return t.name;
     }
 
-    clearAll() { this.map = {}; this.last = {}; this.persist(); }
+    clearAll() { this.map = {}; this.last = {}; this.pos = {}; this.hist = {}; this.persist(); }
 
     unbind(id) { Object.keys(this.map).forEach(k => { if (this.map[k].t === id) delete this.map[k]; }); }
 
     /**
-     * Knob sem fim (encoder) manda passos em vez de posicao: 64 +/- n, ou 1..15 e
-     * 113..127. Knob comum nunca repete o mesmo valor seguido; encoder repete.
+     * Knob sem fim (encoder) manda passos em vez de posicao, perto de um centro:
+     * 64 +/- n (rel64), 1..15 e 113..127 (rel2c) ou 16 +/- n (rel16). Um knob comum
+     * so manda quando muda, entao nunca repete o mesmo valor seguido; um encoder
+     * girando devagar repete (65, 65, 65). Duas repeticoes ja dizem que e encoder.
      */
+    static relKind(v, sure) {
+      if (!v.length) return null;
+      const reps = v.reduce((n, x, i) => n + (i > 0 && x === v[i - 1] ? 1 : 0), 0);
+      const in2c = v.every(x => (x >= 1 && x <= 15) || (x >= 113 && x <= 127));
+      const both2c = in2c && v.some(x => x < 64) && v.some(x => x > 64);
+      const ok = sure || reps >= 2;
+      if (in2c && (ok || both2c)) return "rel2c";
+      if (ok && v.every(x => x >= 57 && x <= 71 && x !== 64)) return "rel64";
+      if (ok && v.every(x => x >= 9 && x <= 23 && x !== 16)) return "rel16";
+      return null;
+    }
+
+    /** Na hora de salvar. O Control do 950 e um encoder, entao basta cair na faixa. */
     modeFor(t, c) {
-      const v = c.vals;
-      if (!c.key.startsWith("c:") || !v.length) return "abs";
-      const rel64 = v.every(x => x >= 57 && x <= 71 && x !== 64);
-      const rel2c = v.every(x => (x >= 1 && x <= 15) || (x >= 113 && x <= 127));
-      const repeats = v.some((x, i) => i > 0 && x === v[i - 1]);
-      if (t.kind !== "encoder" && !repeats) return "abs";
-      return rel64 ? "rel64" : rel2c ? "rel2c" : "abs";
+      if (!c.key.startsWith("c:")) return "abs";
+      return RJ.MidiMap.relKind(c.vals, t.kind === "encoder") || "abs";
+    }
+
+    /** Passo de um encoder, ou null se a mensagem e uma posicao. */
+    static delta(mode, raw) {
+      if (mode === "rel64") return raw - 64;
+      if (mode === "rel16") return raw - 16;
+      if (mode === "rel2c") return raw < 64 ? raw : raw - 128;
+      return null;
     }
 
     mark() {
@@ -143,30 +163,63 @@
     /* ----------------------------------------------------- tocar */
 
     drive(t, b, m) {
+      if (m.type === "cc" && b.mode === "abs" && !b.sure) {
+        // enquanto nao da para saber se e knob comum ou encoder, slider e knob esperam
+        // (senao um encoder faria o slider pular para o meio nos primeiros toques)
+        if (this.recheck(b, m) === "wait" && (t.kind === "value" || t.kind === "encoder")) return;
+      }
+      const d = m.type === "cc" ? RJ.MidiMap.delta(b.mode, m.raw) : null;
       if (t.kind === "button" || t.kind === "pad") {
-        if (m.type === "pc") { this.press(t, 1); setTimeout(() => this.release(t), 90); return; }
-        const down = m.type === "note" ? m.on : m.v >= 0.5;
-        if (down) this.press(t, m.type === "note" ? m.v : 1); else this.release(t);
+        // program change ou encoder: cada mensagem e um toque
+        if (m.type === "pc" || d != null) { this.release(t); this.press(t, 1); this.release(t); this.blink(t); return; }
+        if (m.type === "note") { if (m.on) this.press(t, m.v); else this.release(t); return; }
+        // CC: 64 ou mais aperta, menos solta. Um botao que so manda 127 aperta de novo a cada toque.
+        if (m.v >= 0.5) { this.release(t); this.press(t, 1); } else this.release(t);
         return;
       }
       if (m.type === "pc") return;
       if (m.type === "note") { if (m.on) { if (t.kind === "encoder") t.step(1); else t.set(m.v); } return; }
-      let d = null;
-      if (m.type === "cc" && b.mode === "rel64") d = m.raw - 64;
-      else if (m.type === "cc" && b.mode === "rel2c") d = m.raw < 64 ? m.raw : m.raw - 128;
       if (t.kind === "encoder") {
-        if (d == null) {
+        let step = d;
+        if (step == null) {
           // knob comum num encoder: anda a diferenca desde a ultima posicao
           const now = m.v * 127, prev = this.last[m.key];
           this.last[m.key] = now;
           if (prev == null) return;
-          d = Math.round(now - prev);
+          step = Math.round(now - prev);
         }
-        if (d) t.step(d);
+        if (step) t.step(step);
         return;
       }
-      t.set(d == null ? m.v : clamp(t.get() + d / 100, 0, 1));
+      if (d == null) { t.set(m.v); delete this.pos[t.id]; return; }
+      // encoder num slider ou knob: soma numa posicao propria, para os valores em degraus
+      // (decay, multi level) andarem tambem quando o encoder gira devagar
+      const cur = t.get();
+      let p = this.pos[t.id];
+      if (p == null || Math.abs(p - cur) > 0.05) p = cur;
+      p = clamp(p + d / 64, 0, 1);
+      this.pos[t.id] = p;
+      t.set(p);
     }
+
+    /**
+     * Confere um CC salvo como posicao: se comeca a repetir valores perto do centro, e
+     * um encoder e o modo muda sozinho ("rel"). Um valor longe dos centros, ou quatro
+     * valores diferentes seguidos, confirmam o knob comum ("abs"). Antes disso, "wait".
+     */
+    recheck(b, m) {
+      const h = this.hist[m.key] || (this.hist[m.key] = []);
+      h.push(m.raw);
+      if (h.length > 8) h.shift();
+      const kind = RJ.MidiMap.relKind(h, false);
+      if (kind) { b.mode = kind; delete this.hist[m.key]; this.persist(); return "rel"; }
+      const x = m.raw, near = (x >= 1 && x <= 23) || (x >= 57 && x <= 71) || x >= 113;
+      const changing = h.length >= 4 && h.slice(-4).every((v, i, a) => i === 0 || v !== a[i - 1]);
+      if (!near || changing) { b.sure = true; delete this.hist[m.key]; this.persist(); return "abs"; }
+      return "wait";
+    }
+
+    blink(t) { t.el.classList.add("down"); clearTimeout(t.blinkTimer); t.blinkTimer = setTimeout(() => t.el.classList.remove("down"), 90); }
 
     press(t, vel) {
       if (t.kind !== "pad" && this.held.has(t.id)) return;

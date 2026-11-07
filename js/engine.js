@@ -42,7 +42,7 @@ RJ.Engine = class {
   get ready() { return !!this.ctx; }
 
   buildGraph(ctx) {
-    const g = { ctx, inputs: [], filters: [], voices: new Array(8).fill(null), lastPair: new Array(4).fill(0) };
+    const g = { ctx, inputs: [], filters: [], voices: new Array(8).fill(null) };
     g.mix = ctx.createGain();
     const nyq = ctx.sampleRate * 0.45;
     for (let ch = 0; ch < 8; ch++) {
@@ -125,12 +125,7 @@ RJ.Engine = class {
     if (!buf) return;
     const when = Math.max(opts.when || 0, ctx.currentTime);
 
-    let ch = snd.channel & 7;
-    // alocacao dinamica (funcao especial 22): alterna dentro do par de canais
-    if (this.project.dynAlloc) {
-      const pair = ch >> 1;
-      ch = pair * 2 + (g.lastPair[pair] ^= 1);
-    }
+    const ch = snd.channel & 7;
 
     const prev = g.voices[ch];
     if (prev) {

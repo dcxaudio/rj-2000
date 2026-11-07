@@ -1,5 +1,14 @@
 # Changelog
 
+## b0.3 (beta)
+
+- MIDI Learn: os seletores (bancos, Tune/Decay-Mix-Multi, Song/Segment) também são escolhidos tocando nas luzes e nos nomes ao lado do botão. O Set-up também aprende.
+- MIDI Learn: knob sem fim (encoder) salvo como knob comum fazia o slider pular para o meio e travar. Agora ele é reconhecido nos primeiros toques, sozinho, inclusive nos mapeamentos já salvos, e anda também nos valores em degraus (decay, multi level).
+- MIDI Learn: encoder ligado a um botão vale um toque por passo; botão que só manda 127 aperta de novo a cada toque.
+- RJ-950: grupo de corte por sample (Edit Sample, página 5): samples no mesmo grupo cortam um ao outro, para fatiar loops. A cópia herda o grupo.
+- Disk 9 agora é New: começa do zero com o kit padrão, mantendo o canal MIDI e o tempo de sample.
+- Saíram opções pouco usadas: Disk 7 e 8 (Catalog), SET-UP 21 (1st Song Step) e SET-UP 23 > Dynamic Alloc. A song sempre começa no passo 1 e cada som sai sempre no canal do SET-UP 17.
+
 ## b0.2 (beta)
 
 Versão para o navegador. A cópia fiel ao SP-1200, com tudo da b0.1, fica no branch `classic`, base do futuro RJ-2000 Classic.

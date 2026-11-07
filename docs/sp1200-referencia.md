@@ -326,7 +326,7 @@ Fontes:
 - [x] Copy com append; Erase por pad, por segmento e ao vivo; Step Program pelo LCD.
 - [x] Auto Correct com 1/4 a Hi-Res; metrônomo com subdivisões e knob de volume; swing só com a máquina parada.
 - [x] Record/Edit: arma parado, punch in/out tocando, edição da song no song mode. Bipe em segmento vazio e travas durante a reprodução.
-- [x] Song mode completo pelo LCD: Insert, Delete, Repeat, End (parar, repetir, encadear), Tempo Change, Mix Change, Subsong, Trigger e 1st Song Step.
+- [x] Song mode completo pelo LCD: Insert, Delete, Repeat, End (parar, repetir, encadear), Tempo Change, Mix Change, Subsong, Trigger e 1st Song Step (o 1st Song Step saiu da versão do navegador na b0.3).
 - [x] Mix por som, mix por song e 8 mixes guardados (SET-UP 15 e 16).
 - [x] Tune ou decay por som (SET-UP 18), ±7 semitons; multi pitch e multi level (SET-UP 11, 12, 13) com LED Multi Mode.
 - [x] Canal por som (SET-UP 17) e alocação dinâmica; filtros: 1-2 dinâmico pelo decay, 3-4 fixo baixo, 5-6 fixo alto, 7-8 sem filtro.
@@ -349,6 +349,7 @@ Fontes:
 
 - SET-UP 22 virou MIDI Learn para todos os controles; o canal do mapa fixo foi para o SET-UP 23 > MIDI Channel.
 - Saíram o módulo Sync e o Disk 9 (Format/Copy). A versão fiel da b0.1 fica no branch `classic`, ponto de partida do RJ-2000 Classic.
+- Na b0.3 saíram também Disk 7 e 8 (Catalog), SET-UP 21 (1st Song Step) e a alocação dinâmica do SET-UP 23; o Disk 9 virou New.
 - [ ] Valores exatos dos filtros e da curva de decay, comparando com gravações da máquina.
 - [ ] Testar o sampling por microfone num navegador comum (o painel de teste bloqueia o microfone).
 - [ ] Confirmar os itens marcados com **[confirmar]** acima.

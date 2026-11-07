@@ -187,7 +187,7 @@ RJ.Sequencer = class {
     const p = this.p;
     this.songIdx = p.curSong;
     const song = RJ.song(p, this.songIdx);
-    this.songPc = Math.max(0, (song.first || 1) - 1);
+    this.songPc = 0;
     this.repStack = [];
     this.callStack = [];
     this.songTempo = song.tempo;
@@ -246,7 +246,7 @@ RJ.Sequencer = class {
           if (st.kind === "link" && st.song != null) {
             this.songIdx = st.song;
             const s2 = RJ.song(p, st.song);
-            this.songPc = Math.max(0, (s2.first || 1) - 1);
+            this.songPc = 0;
             this.songTempo = s2.tempo;
             this.repStack = [];
             this.emit("songlink", st.song);
