@@ -111,7 +111,9 @@ RJ.Sampler = class {
 
 /**
  * MIDI (Chrome, Edge e Opera; Safari e Firefox tem suporte limitado).
- * Notas 36-67 tocam os 32 sons direto (36 = A1 ... 43 = A8, 44 = B1 ...).
+ * Cada mensagem passa primeiro pelo MIDI Learn (onMessage). O que nao foi
+ * aprendido segue o mapa padrao:
+ * notas 36-67 tocam os 32 sons direto (36 = A1 ... 43 = A8, 44 = B1 ...).
  * Assim o banco A de pads de um controlador (36-43) toca o banco A e o
  * banco B do controlador (44-51) toca o banco B.
  * CC 20-27 movem os sliders 1-8 no modo atual.
@@ -119,6 +121,7 @@ RJ.Sampler = class {
 RJ.Midi = class {
   constructor() {
     this.access = null;
+    this.onMessage = null;
     this.onNote = null;
     this.onSlider = null;
     this.onChange = null;
@@ -131,6 +134,7 @@ RJ.Midi = class {
 
   async enable() {
     if (!this.supported) throw new Error("MIDI nao suportado neste navegador");
+    if (this.access) { this.bind(); return this.inputs; }
     this.access = await navigator.requestMIDIAccess({ sysex: false });
     this.bind();
     this.access.onstatechange = () => { this.bind(); if (this.onChange) this.onChange(this.inputs); };
@@ -146,6 +150,7 @@ RJ.Midi = class {
   }
 
   handle(d) {
+    if (this.onMessage && this.onMessage(d)) return;
     const st = d[0] & 0xf0;
     if (!this.omni && (d[0] & 0x0f) !== this.channel - 1) return;
     if (st === 0x90 && d[2] > 0) {

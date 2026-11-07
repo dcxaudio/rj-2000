@@ -16,7 +16,7 @@ O RJ-2000 segue o painel e o fluxo de trabalho do SP-1200: quase tudo passa por 
 - **Song mode** editado passo a passo: repetições, mudança de tempo e de mix, subsongs e encadeamento.
 - **Sampling** pelo microfone ou pela entrada de áudio, com ganho, limiar e tamanho.
 - **Disk:** salva e carrega sequências e sons em arquivos separados, e carrega samples WAV, AIFF, MP3, OGG e FLAC em qualquer pad. O estado também fica salvo no navegador.
-- **Teclado do computador e MIDI** (Chrome e Edge).
+- **Teclado do computador e MIDI** (Chrome e Edge), com **MIDI Learn**: qualquer controle do SP e do RJ-950 aprende um pad, knob ou fader do seu controlador.
 - **RJ-950 embaixo do SP:** um sampler de rack inspirado no **Akai S950**, como no estúdio dos anos 80 e 90. Os pads do SP tocam os samples longos do 950 (até 48 s), com início, fim, loop, tune, reverse e filtro passa-baixa. LCD de 2 x 40, knob Control e disquete para soltar arquivos.
 
 ## Como usar
@@ -35,8 +35,9 @@ js/engine.js        motor de áudio (canais, filtros, afinação drop-sample)
 js/sequencer.js     sequenciador, auto correct, swing, song mode
 js/project.js       sons, memória, segmentos, songs, mixes, arquivos
 js/io.js            microfone e MIDI
+js/midimap.js       MIDI Learn: mapa de mensagens MIDI para os controles
 js/s950.js          RJ-950: sampler de rack, memória, vozes, filtro e páginas
-js/app.js           painel, LCD e páginas (Set-up, Disk, Sync, Sample)
+js/app.js           painel, LCD e páginas (Set-up, Disk, Sample)
 js/kit.js           kit padrão embutido (gerado)
 samples/boom-bap-01 kit padrão (banco A), WAV, CC BY 4.0 / CC0
 samples/choro-01    melodias (banco B), WAV, domínio público

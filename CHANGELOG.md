@@ -1,5 +1,16 @@
 # Changelog
 
+## b0.2 (beta)
+
+Versão para o navegador. A cópia fiel ao SP-1200, com tudo da b0.1, fica no branch `classic`, base do futuro RJ-2000 Classic.
+
+- MIDI Learn no SET-UP 22: toque num controle do SP ou do RJ-950, mexa no controlador, a última mensagem aparece no LCD e o Enter salva. Vale para pads, sliders, knobs, botões, transporte e o Control do 950. Aceita notas, CC, pitch bend e program change, e percebe sozinho knob sem fim (encoder). O mapa fica salvo no navegador, fora do projeto.
+- O MIDI liga sozinho a cada boot depois da primeira vez.
+- O canal do mapa padrão (notas 36 a 67, CC 20 a 27) foi para o SET-UP 23 > MIDI Channel (Omni ou 01 a 16). Novo SET-UP 23 > Clear MIDI Learn.
+- Saiu o módulo Sync (Internal, MIDI, SMPTE e Click): sincronizar por clock não faz sentido no navegador.
+- Saiu o Disk 9 (Format/Copy Software).
+- RJ-950: girar o Control para mudar início ou fim enquanto o sample toca não engasga mais. Antes cada passo criava uma cópia nova do áudio e a memória ia acumulando; agora o sample fica guardado uma vez só e toca direto o trecho escolhido.
+
 ## b0.1 (beta)
 
 Painel e funcionamento refeitos para ficar o mais perto possível do SP-1200 original.
@@ -17,7 +28,6 @@ Painel e funcionamento refeitos para ficar o mais perto possível do SP-1200 ori
 - Tempo de sample de 20 s por padrão (5 s por banco), como na reedição da Rossum; SET-UP 23 > Sample Time volta aos 10 s do original. O Sample Length vai até 5 s.
 - Novo RJ-950, um sampler de rack embaixo do SP, inspirado no Akai S950: LCD de 2 x 40, 8 modos, teclado, knob Control, disquete para soltar arquivos, 12 bits de 7,5 a 48 kHz, 2,25 MB (48 s a 32 kHz), 8 vozes. Por sample: início e fim no cruzamento de zero, loop, tune, fine, level, reverse e filtro passa-baixa de 2 polos. Os pads do SP mandam notas para o 950, ao vivo e pelo sequenciador, e cada pad aponta para um sample (Edit Program). Copy cria cópias que dividem a memória, para fatiar um loop entre pads. Memória salva no navegador e em arquivo.
 - Saiu o Chop (fatiar um sample longo nos pads do SP): esse trabalho agora é feito no RJ-950.
-- RJ-950: girar o Control para mudar início ou fim enquanto o sample toca não engasga mais. Antes cada passo criava uma cópia nova do áudio e a memória ia acumulando; agora o sample fica guardado uma vez só e toca direto o trecho escolhido.
 - Sample enxuto: saíram o 3 (Level, agora só o knob Gain de −12 a +36 dB) e o 6 (Re-Sample); entrou o 8 (Load File). O microfone só é pedido quando uma função de gravação é usada.
 - Banco B com melodias de exemplo: Choro 01, trechos de choro de 1907 a 1913 em domínio público (Chiquinha Gonzaga, Irineu de Almeida, Joaquim Callado), créditos em samples/choro-01.
 - A máquina começa limpa: sem padrão nem song de exemplo.

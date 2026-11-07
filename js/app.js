@@ -15,13 +15,18 @@ window.RJ = window.RJ || {};
   const pad2 = n => String(Math.max(0, n | 0)).padStart(2, "0");
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const L = RJ.soundLabel;
-  const VERSION = "b0.1";
+  const VERSION = "b0.2";
   const fmtTempo = t => { const v = Math.round(t * 10) / 10; return String(Math.floor(v)).padStart(3, "0") + "." + Math.round((v % 1) * 10); };
   const BAR = k => String.fromCharCode(0x2581 + clamp(Math.round(k * 7), 0, 7));
   const fit = (s, n = 16) => (s + " ".repeat(n)).slice(0, n);
 
   const PROG_SEG = ["metronome", "swing", "copy", "timesig", "length", "erase", "autocorrect", "step"];
   const PROG_SONG = ["trigger", "repeat", "subsong", "end", "insert", "delete", "tempochange", "mixchange"];
+
+  // nomes no LCD do MIDI Learn (o Set-up fica de fora: e por ele que se sai do Learn)
+  const ACT_NAMES = { disk: "Disk", sample: "Sample", tempo: "Tempo", songseg: "Song/Segment", perfmode: "Tune/Mix/Multi", bank: "Bank" };
+  const KEY_NAMES = { dec: "Key <", inc: "Key >", enter: "Enter", 7: "Key 7/No", 9: "Key 9/Yes" };
+  const PROG_NAMES = ["Trigger/Metro", "Repeat/Swing", "Subsong/Copy", "End/Time Sig", "Insert/Length", "Delete/Erase", "TempoChg/AutoCor", "MixChg/StepProg"];
 
   class App {
     constructor() {
@@ -30,6 +35,7 @@ window.RJ = window.RJ || {};
       this.seq = new RJ.Sequencer(this.p, this.engine);
       this.sampler = new RJ.Sampler(this.engine);
       this.midi = new RJ.Midi();
+      this.learn = new RJ.MidiMap();
       this.engine.levelOf = s => this.levelOf(s);
       // o rack que fica embaixo: recebe as notas dos pads, como pelo MIDI
       this.s950 = new RJ.S950(this);
@@ -76,6 +82,7 @@ window.RJ = window.RJ || {};
       this.engine.ensure();
       $("#power").classList.add("off");
       this.s950.boot();             // o RJ-950 liga junto (mesma regua de tomadas)
+      this.learn.load().then(() => { if (this.learn.enabled) this.enableMidi(); });
       const wait = ms => new Promise(r => setTimeout(r, ms));
       this.lcd(" RJ-2000  " + VERSION, " Insert Diskette");
       await wait(700);
@@ -107,6 +114,7 @@ window.RJ = window.RJ || {};
       this.engine.applyVolumes();
       this.sel = 0; this.bank = 0; this.page = null;
       this.perf = this.p.multi ? "multi" : "mix";
+      this.applyMidiChannel();
     }
 
     /* =========================================================== eventos */
@@ -127,12 +135,33 @@ window.RJ = window.RJ || {};
         el.addEventListener("contextmenu", e => e.preventDefault());
       };
 
-      $$("[data-act]").forEach(b => press(b, () => this.action(b.dataset.act)));
-      $$("[data-key]").forEach(b => press(b, () => this.key(b.dataset.key), () => this.keyUp(b.dataset.key)));
-      $$("[data-prog]").forEach(b => press(b, () => this.progDown(+b.dataset.prog), () => this.progUp(+b.dataset.prog)));
+      // MIDI Learn: cada controle diz o que fazer quando chegar a mensagem que ele aprendeu
+      const learn = (id, el, name, down, up, kind = "button") =>
+        this.learn.add(id, el, name, kind, { down: v => { if (this.on) down(v); }, up: () => { if (this.on && up) up(); } });
+
+      $$("[data-act]").forEach(b => {
+        const a = b.dataset.act;
+        press(b, () => this.action(a));
+        if (ACT_NAMES[a]) learn("act:" + a, b, ACT_NAMES[a], () => this.action(a));
+      });
+      $$("[data-key]").forEach(b => {
+        const k = b.dataset.key;
+        press(b, () => this.key(k), () => this.keyUp(k));
+        // pelo MIDI as setas andam um passo por toque: um botao que fica preso nao corre sozinho
+        learn("key:" + k, b, KEY_NAMES[k] || "Key " + k, () => { this.key(k); if (k === "inc" || k === "dec") this.keyUp(); });
+      });
+      $$("[data-prog]").forEach(b => {
+        const n = +b.dataset.prog;
+        press(b, () => this.progDown(n), () => this.progUp(n));
+        learn("prog:" + n, b, PROG_NAMES[n], () => this.progDown(n), () => this.progUp(n));
+      });
+      const recDown = () => { this.recHeld = true; this.recordEdit(); }, recUp = () => { this.recHeld = false; };
       press($("#btn-run"), () => this.runStop());
-      press($("#btn-rec"), () => { this.recHeld = true; this.recordEdit(); }, () => { this.recHeld = false; });
+      press($("#btn-rec"), recDown, recUp);
       press($("#btn-tap"), () => this.tapDown(), () => this.tapUp());
+      learn("run", $("#btn-run"), "Run/Stop", () => this.runStop());
+      learn("rec", $("#btn-rec"), "Record/Edit", recDown, recUp);
+      learn("tap", $("#btn-tap"), "Tap/Repeat", () => this.tapDown(), () => this.tapUp());
 
       $$(".pad[data-pad]").forEach(pad => {
         const i = +pad.dataset.pad;
@@ -140,6 +169,7 @@ window.RJ = window.RJ || {};
           const vel = this.p.dynamic && e.pressure && e.pointerType !== "mouse" ? clamp(e.pressure * 1.4, 0.15, 1) : 1;
           this.padDown(i, vel);
         }, () => this.padUp(i));
+        learn("pad:" + i, pad, "Pad " + (i + 1), vel => this.padDown(i, this.p.dynamic ? vel : 1), () => this.padUp(i), "pad");
         // arrastar um arquivo de audio para o pad = SAMPLE 8 naquele pad
         pad.addEventListener("dragenter", e => { e.preventDefault(); if (this.on) pad.classList.add("drop"); });
         pad.addEventListener("dragover", e => { e.preventDefault(); e.dataTransfer.dropEffect = this.on ? "copy" : "none"; });
@@ -156,9 +186,23 @@ window.RJ = window.RJ || {};
       window.addEventListener("drop", e => e.preventDefault());
 
       for (let i = 0; i < 8; i++) this.bindFader(i);
-      this.bindKnob($("#knob-mix"), () => this.p.masterVol, v => { this.p.masterVol = v; this.engine.applyVolumes(); this.dirty(); });
-      this.bindKnob($("#knob-met"), () => this.p.metVol, v => { this.p.metVol = v; this.engine.applyVolumes(); this.dirty(); });
-      this.bindKnob($("#knob-gain"), () => this.p.sample.fine, v => { this.p.sample.fine = v; this.applyGain(); this.dirty(); if (this.page && this.page.module === "sample") this.renderLCD(); });
+      this.bindKnob($("#knob-mix"), () => this.p.masterVol, v => { this.p.masterVol = v; this.engine.applyVolumes(); this.dirty(); }, "knob:mix", "Mix Volume");
+      this.bindKnob($("#knob-met"), () => this.p.metVol, v => { this.p.metVol = v; this.engine.applyVolumes(); this.dirty(); }, "knob:met", "Metronome Vol");
+      this.bindKnob($("#knob-gain"), () => this.p.sample.fine, v => { this.p.sample.fine = v; this.applyGain(); this.dirty(); if (this.page && this.page.module === "sample") this.renderLCD(); }, "knob:gain", "Gain");
+
+      // no MIDI Learn, tocar num controle escolhe o que ele vai aprender (a funcao nao roda).
+      // O Set-up continua normal: e o jeito de sair do Learn.
+      const grab = e => {
+        if (!this.learn.learning || !e.target.closest || !e.target.closest(".unit")) return;
+        if (e.target.closest("[data-act='setup']")) return;
+        const el = e.target.closest("[data-learn]");
+        if (e.type === "wheel") { if (el) { e.preventDefault(); e.stopPropagation(); } return; }
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === "pointerdown" && el) this.learnTouch(el.dataset.learn);
+      };
+      ["pointerdown", "click", "dblclick"].forEach(ev => window.addEventListener(ev, grab, true));
+      window.addEventListener("wheel", grab, { capture: true, passive: false });
 
       $("#file-pick").addEventListener("change", e => {
         const files = Array.from(e.target.files || []);
@@ -175,14 +219,21 @@ window.RJ = window.RJ || {};
       this.sampler.onLevel = () => { if (this.page && this.page.module === "sample") this.renderLCD(); };
       this.sampler.onDone = (raw, rate, peak) => this.sampleDone(raw, rate, peak);
 
+      this.midi.onMessage = d => this.on && this.learn.handle(d);
       this.midi.onNote = (n, vel, on) => { if (on && this.on) this.hitSound(n, { vel: this.p.dynamic ? vel : 1 }); };
       this.midi.onSlider = (i, v) => { if (this.on) this.faderInput(i, v); };
+      this.midi.onChange = ins => { this.midiStatus = ins.length ? fit(ins[0], 16) : "No MIDI Input"; this.renderLCD(); };
+      this.learn.onChange = () => this.renderLCD();
 
       document.addEventListener("visibilitychange", () => { if (document.hidden) { this.saveNow(); this.s950.saveNow(); } });
     }
 
     bindFader(i) {
       const el = $(`#fd-${i}`);
+      this.learn.add("fader:" + i, el, "Slider " + (i + 1), "value", {
+        get: () => this.faderValue(i),
+        set: v => { if (this.on) this.faderInput(i, v); },
+      });
       const setFrom = e => {
         const r = el.getBoundingClientRect();
         const v = clamp(1 - (e.clientY - r.top - 11) / (r.height - 22), 0, 1);
@@ -206,9 +257,10 @@ window.RJ = window.RJ || {};
       });
     }
 
-    bindKnob(el, get, set) {
+    bindKnob(el, get, set, id, name) {
       const draw = () => { el.querySelector("i").style.transform = `rotate(${-135 + get() * 270}deg)`; };
       el.rjDraw = draw;
+      if (id) this.learn.add(id, el, name, "value", { get, set: v => { if (this.on) { set(v); draw(); } } });
       let startY = 0, startV = 0;
       el.addEventListener("pointerdown", e => { e.preventDefault(); el.setPointerCapture(e.pointerId); startY = e.clientY; startV = get(); el.dataset.drag = "1"; });
       el.addEventListener("pointermove", e => { if (!el.dataset.drag) return; set(clamp(startV + (startY - e.clientY) / 160, 0, 1)); draw(); });
@@ -228,6 +280,16 @@ window.RJ = window.RJ || {};
       window.addEventListener("keydown", e => {
         if (e.metaKey || e.ctrlKey || e.altKey) return;
         if (!this.on) { if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); this.powerOn(); } return; }
+        // no MIDI Learn: Enter salva, Delete apaga o do controle escolhido, Esc sai
+        if (this.learn.learning) {
+          if (e.code === "Tab") return;
+          e.preventDefault();
+          if (e.repeat) return;
+          if (e.code === "Enter" || e.code === "NumpadEnter") this.learnEnter();
+          else if (e.code === "Escape") this.exitPage();
+          else if ((e.code === "Backspace" || e.code === "Delete") && this.learn.sel) { const n = this.learn.clear(this.learn.sel); if (n) this.flash("Cleared", n, 1000); }
+          return;
+        }
         // depois de um clique no RJ-950, numeros, setas e Enter vao para ele
         if (this.s950.focused && this.s950.keyEvent(e)) { e.preventDefault(); return; }
         if (this.page && this.page.text && this.page.text(e)) { e.preventDefault(); return; }
@@ -382,7 +444,6 @@ window.RJ = window.RJ || {};
       switch (a) {
         case "setup": return this.togglePage("setup", () => this.setupPage());
         case "disk": if (this.blocked()) return; return this.togglePage("disk", () => this.diskPage());
-        case "sync": if (this.blocked()) return; return this.togglePage("sync", () => this.syncPage());
         case "sample": if (this.blocked()) return; return this.togglePage("sample", () => this.samplePage());
         case "tempo": return this.togglePage("tempo", () => this.tempoPage());
         case "songseg": return this.toggleSongSeg();
@@ -1039,21 +1100,7 @@ window.RJ = window.RJ || {};
               key(k) { if (/^[0-9]$/.test(k) && g.push(k)) { song.first = clamp(parseInt(g.buf, 10), 1, 99); g.clear(); app.dirty(); app.exitPage(); } return true; },
             };
           }
-          case 22: {
-            const g = app.numField(2);
-            let stage = "ch";
-            app.enableMidi();
-            return {
-              render: () => stage === "ch" ? ["MIDI Channel " + g.show(p.midi.channel), app.midiStatus || "MIDI"] : ["MIDI Mode", "1=Omni 2=Poly (" + (p.midi.mode === "omni" ? "1" : "2") + ")"],
-              cursor: () => stage === "ch" ? [0, 13 + g.buf.length] : null,
-              key(k) {
-                if (stage === "ch" && /^[0-9]$/.test(k)) { if (g.push(k)) { p.midi.channel = clamp(parseInt(g.buf, 10), 1, 16); g.clear(); stage = "mode"; app.dirty(); } return; }
-                if (stage === "ch" && k === "enter") { stage = "mode"; return; }
-                if (stage === "mode" && (k === "1" || k === "2")) { p.midi.mode = k === "1" ? "omni" : "poly"; app.midi.channel = p.midi.channel; app.midi.omni = p.midi.mode === "omni"; app.dirty(); app.exitPage(); return; }
-                return true;
-              },
-            };
-          }
+          case 22: return app.learnPage();
           case 23: return app.specialPage();
         }
         app.flash("Set-up " + n, "Invalid");
@@ -1144,6 +1191,8 @@ window.RJ = window.RJ || {};
         { n: "Name Sound", go: () => app.openPage(app.selectSound("Name Sound", s => app.openPage(app.namePage(s), "setup")), "setup") },
         { n: "Sample Time", go: () => app.openPage(app.sampleTimePage(), "setup") },
         { n: "Dynamic Alloc", go: () => app.openPage(app.confirmPage("Dynamic Alloc?", "Yes/No (" + (p.dynAlloc ? "Yes" : "No") + ")", () => { p.dynAlloc = true; app.dirty(); }, () => { p.dynAlloc = false; app.dirty(); }), "setup") },
+        { n: "MIDI Channel", go: () => app.openPage(app.midiChannelPage(), "setup") },
+        { n: "Clear MIDI Learn", go: () => app.openPage(app.confirmPage("Clear MIDI Learn?", "Yes/No", () => { app.learn.clearAll(); app.flash("MIDI Learn", "Cleared"); }), "setup") },
       ];
       let i = 0;
       return {
@@ -1261,15 +1310,14 @@ window.RJ = window.RJ || {};
           });
           case 7: return app.catalogPage("seq");
           case 8: return app.catalogPage("snd");
-          case 9: app.flash("Format/Copy", "Not Needed"); return null;
           case 0: app.pickFiles(".json", true, fs => app.loadFiles(fs, "all")); app.flash("Load Seq & Sounds", "Choose File(s)"); return null;
         }
         return null;
       };
       return {
-        render: () => ["Disk", "Select _ (0-9)"], cursor: () => [1, 7],
+        render: () => ["Disk", "Select _ (0-8)"], cursor: () => [1, 7],
         key(k) {
-          if (/^[0-9]$/.test(k)) { const pg = sub(+k); if (pg) app.openPage(pg, "disk"); else { app.exitPage(true); app.renderAll(); } return; }
+          if (/^[0-8]$/.test(k)) { const pg = sub(+k); if (pg) app.openPage(pg, "disk"); else { app.exitPage(true); app.renderAll(); } return; }
           if (k === "enter") return false;
           return true;
         },
@@ -1375,18 +1423,6 @@ window.RJ = window.RJ || {};
     }
 
     /* =========================================================== SYNC */
-
-    syncPage() {
-      const app = this, p = this.p, names = ["Internal", "MIDI", "SMPTE", "Click"];
-      return {
-        render: () => ["Sync", p.sync + " " + names[p.sync - 1]],
-        key(k) {
-          if (k === "1") { p.sync = 1; app.dirty(); return; }
-          if (/^[2-4]$/.test(k)) { app.flash(names[+k - 1] + " Sync", "Not Available"); return; }
-          return k === "enter" ? false : true;
-        },
-      };
-    }
 
     /* =========================================================== SAMPLE */
 
@@ -1503,16 +1539,73 @@ window.RJ = window.RJ || {};
 
     /* =========================================================== MIDI */
 
+    /** Liga o MIDI do navegador. Depois da primeira vez, liga sozinho a cada boot. */
     async enableMidi() {
       try {
         const ins = await this.midi.enable();
-        this.midi.channel = this.p.midi.channel;
-        this.midi.omni = this.p.midi.mode === "omni";
+        this.applyMidiChannel();
         this.midiStatus = ins.length ? fit(ins[0], 16) : "No MIDI Input";
+        if (!this.learn.enabled) { this.learn.enabled = true; this.learn.persist(); }
       } catch (e) {
         this.midiStatus = "MIDI Unavailable";
       }
       this.renderLCD();
+    }
+
+    /** Canal do mapa padrao (notas 36-67 e CC 20-27). O que foi aprendido ja traz o canal. */
+    applyMidiChannel() {
+      this.midi.channel = this.p.midi.channel;
+      this.midi.omni = this.p.midi.mode === "omni";
+    }
+
+    midiChannelPage() {
+      const app = this, p = this.p;
+      const list = ["Omni"].concat(Array.from({ length: 16 }, (_, i) => pad2(i + 1)));
+      return {
+        render: () => ["MIDI Channel", p.midi.mode === "omni" ? "Omni (All)" : "Channel " + list[p.midi.channel]],
+        key(k) {
+          if (k !== "inc" && k !== "dec") return k === "enter" ? false : true;
+          const i = clamp((p.midi.mode === "omni" ? 0 : p.midi.channel) + (k === "inc" ? 1 : -1), 0, 16);
+          if (i === 0) p.midi.mode = "omni"; else { p.midi.mode = "poly"; p.midi.channel = i; }
+          app.applyMidiChannel();
+          app.dirty();
+        },
+      };
+    }
+
+    /**
+     * SET-UP 22: toca-se num controle do SP ou do RJ-950, a ultima mensagem MIDI
+     * que chegar aparece no LCD e o Enter salva. Depois e so tocar em outro.
+     */
+    learnPage() {
+      const app = this, L = this.learn, label = RJ.MidiMap.label;
+      return {
+        enter() { L.start(); app.enableMidi(); },
+        exit() { L.stop(); },
+        render: () => {
+          if (!app.midi.access) return ["MIDI Learn", app.midiStatus || "Starting MIDI"];
+          const t = L.sel && L.targets.get(L.sel);
+          if (!t) return ["MIDI Learn", L.cand ? label(L.cand.key) : app.midi.inputs.length ? "Touch a Control" : "No MIDI Input"];
+          if (L.cand) return [t.name, label(L.cand.key) + " Ent"];
+          const b = L.bound(t.id);
+          return [t.name, b ? "Now " + label(b) : "Send MIDI..."];
+        },
+        key(k) { if (k === "enter") { app.learnEnter(); return; } return true; },
+      };
+    }
+
+    /** Toque num controle durante o Learn. O Enter do painel salva quando ha mensagem esperando. */
+    learnTouch(id) {
+      const L = this.learn;
+      if (id === "key:enter" && L.sel && L.cand) { this.learnEnter(); return; }
+      L.select(id);
+      this.flashUntil = 0;
+      this.renderLCD();
+    }
+
+    learnEnter() {
+      const name = this.learn.save();
+      if (name) this.flash("Saved", name, 1000);
     }
 
     /* =========================================================== salvar */
@@ -1537,7 +1630,7 @@ window.RJ = window.RJ || {};
     renderLEDs() {
       const p = this.p, mod = this.page && this.page.module;
       const on = {
-        setup: mod === "setup", disk: mod === "disk", sync: mod === "sync", sample: mod === "sample",
+        setup: mod === "setup", disk: mod === "disk", sample: mod === "sample",
         song: p.mode === "song", segment: p.mode === "segment",
         mix: this.perf === "mix", tune: this.perf === "tune", multi: !!p.multi,
         bankA: this.bank === 0, bankB: this.bank === 1, bankC: this.bank === 2, bankD: this.bank === 3,

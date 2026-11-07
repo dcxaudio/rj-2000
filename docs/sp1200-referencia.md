@@ -341,9 +341,14 @@ Fontes:
 
 ### Ainda falta
 
-- [ ] SYNC 2, 3 e 4 (MIDI clock, SMPTE e Click).
+- [ ] SYNC 2, 3 e 4 (MIDI clock, SMPTE e Click): só no RJ-2000 Classic. Na versão do navegador o módulo Sync saiu na b0.2.
 - [ ] Saída de MIDI para aparelhos externos (as notas dos pads já vão para o RJ-950).
 - [ ] Envio de sons por MIDI (sample dump).
+
+### Na b0.2 (versão do navegador)
+
+- SET-UP 22 virou MIDI Learn para todos os controles; o canal do mapa fixo foi para o SET-UP 23 > MIDI Channel.
+- Saíram o módulo Sync e o Disk 9 (Format/Copy). A versão fiel da b0.1 fica no branch `classic`, ponto de partida do RJ-2000 Classic.
 - [ ] Valores exatos dos filtros e da curva de decay, comparando com gravações da máquina.
 - [ ] Testar o sampling por microfone num navegador comum (o painel de teste bloqueia o microfone).
 - [ ] Confirmar os itens marcados com **[confirmar]** acima.

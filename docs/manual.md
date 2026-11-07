@@ -1,8 +1,10 @@
-# Manual do RJ-2000 (b0.1)
+# Manual do RJ-2000 (b0.2)
 
 O RJ-2000 segue o painel e o fluxo de trabalho do E-mu SP-1200. Quase tudo passa pelo LCD de 2 linhas e 16 caracteres: você aperta um botão, digita um número e confirma. As mensagens do LCD ficam em inglês, como na máquina original.
 
 Embaixo dele fica o **RJ-950**, um sampler de rack inspirado no Akai S950, como muita gente usava no estúdio: o SP faz a bateria e o sequenciamento, e o 950 toca os samples longos com início, fim, loop e filtro. Ele está na seção 16.
+
+Esta é a versão para o navegador: saiu o que não faz sentido aqui (Sync e formatar disquete) e entrou o MIDI Learn. A cópia fiel ao SP-1200, que vai virar o **RJ-2000 Classic**, fica no branch `classic` do repositório.
 
 ## 1. Ligando
 
@@ -104,8 +106,8 @@ Para editar, aperte **Record/Edit**. A linha 1 mostra `Song 00 Step 01` e a linh
 | 19 | Loop/Truncate: toque o pad. Sliders 1 e 2 = início (grosso e fino), 3 e 4 = fim, 5 e 6 = loop. Os valores aparecem em amostras. Enter pergunta `Make Truncation Permanent?`; Yes descarta o resto e libera memória. |
 | 20 | Delete Sound. |
 | 21 | 1st Song Step: em que passo a song começa. |
-| 22 | MIDI Parameters: canal (01 a 16) e modo (1 = Omni, 2 = Poly). Também liga o MIDI do navegador. |
-| 23 | Special: setas ou slider 1 percorrem a lista, Enter executa. Clear All Memory, Memory Remaining, Clear Sound Mem, Clear Seq Mem, Copy Sound, Swap Sounds, Default Decay, Name Sound (dá para digitar no teclado do computador), Sample Time (2 = 20 s, o padrão, como na reedição da Rossum; 1 = 10 s como no SP-1200 original, e para isso nenhum banco pode ter mais de 2,5 s), Dynamic Alloc. |
+| 22 | MIDI Learn: ensina mensagens do seu controlador MIDI aos controles do SP e do RJ-950 (seção 15). Também liga o MIDI do navegador. |
+| 23 | Special: setas ou slider 1 percorrem a lista, Enter executa. Clear All Memory, Memory Remaining, Clear Sound Mem, Clear Seq Mem, Copy Sound, Swap Sounds, Default Decay, Name Sound (dá para digitar no teclado do computador), Sample Time (2 = 20 s, o padrão, como na reedição da Rossum; 1 = 10 s como no SP-1200 original, e para isso nenhum banco pode ter mais de 2,5 s), Dynamic Alloc, MIDI Channel (canal do mapa MIDI padrão: Omni ou 01 a 16, pelas setas) e Clear MIDI Learn. |
 
 ## 9. Colocando samples nos pads
 
@@ -154,14 +156,13 @@ No navegador, o disquete é um arquivo no seu computador. Como na máquina, sequ
 | 6 | Load Sound #: toque um pad e escolha um arquivo de áudio (igual ao Sample 8). |
 | 7 | Catalog Sequences: lista segmentos e songs (setas). |
 | 8 | Catalog Sounds: lista os sons, a duração e o canal. |
-| 9 | Format/Copy Software: não se aplica no navegador. |
 | 0 | Load Sequences and Sounds: escolha os dois arquivos de uma vez. |
 
 O estado da máquina também fica salvo sozinho no navegador.
 
 ## 11. Sync
 
-Só **1 Internal** funciona por enquanto. MIDI, SMPTE e Click mostram `Not Available`.
+O módulo Sync (Internal, MIDI, SMPTE e Click) saiu na b0.2: no navegador o RJ-2000 é sempre o relógio, e sincronizar por clock com outros aparelhos não faz sentido aqui. Ele continua na versão fiel, no branch `classic`.
 
 ## 12. O som
 
@@ -188,6 +189,9 @@ O RJ-2000 segue o original o mais perto possível. Estas são as mudanças que f
 | Tempo de sample | 10 s (2,5 s por banco). | 20 s por padrão (5 s por banco), como na reedição da Rossum; 10 s no SET-UP 23 > Sample Time. |
 | Cortes | Cortes secos, que podem estalar. | Fade curto no fim de som cortado. |
 | Sampler junto | O S950 era um aparelho à parte, ligado por cabo MIDI. | O RJ-950 já vem embaixo, ligado aos pads (seção 16). |
+| Sync | Internal, MIDI clock, SMPTE e Click. | Saiu: o RJ-2000 é sempre o relógio (seção 11). |
+| Disk 9 | Format/Copy Software, para disquetes. | Saiu: não há disquete para formatar. |
+| MIDI | SET-UP 22 com canal e Omni/Poly; notas fixas para os sons. | SET-UP 22 é o MIDI Learn, para qualquer controle do SP e do RJ-950. O mapa fixo continua, e o canal dele foi para o SET-UP 23 > MIDI Channel (seção 15). |
 | Cores | Painel cinza. | Painel preto (#1c1c1c), com o mesmo LCD verde. |
 
 ## 14. Teclado do computador
@@ -206,13 +210,46 @@ O RJ-2000 segue o original o mais perto possível. Estas são as mudanças que f
 
 Depois de um clique no RJ-950, os números, o ponto, as setas e o Enter vão para ele (o contorno azul mostra isso): ← → movem o cursor, ↑ ↓ são ON/+ e OFF/−, Page Up/Down trocam de página, P é o PB. Um clique no SP devolve o teclado para ele. Pads, bancos, Espaço e R continuam no SP.
 
+No MIDI Learn (SET-UP 22), o teclado só faz três coisas: Enter salva, Delete (ou Backspace) apaga o que o controle escolhido aprendeu e Esc sai.
+
 ## 15. MIDI
 
-Ligue pelo SET-UP 22 (Chrome, Edge ou Opera).
+Funciona no Chrome, no Edge e no Opera (o Safari não tem MIDI para sites). O MIDI liga na primeira vez que você abre o SET-UP 22, e o navegador pede permissão. Depois disso, liga sozinho toda vez que a máquina liga.
 
-- **Notas 36 a 67** tocam os 32 sons direto: 36 = A1, 43 = A8, 44 = B1, e assim por diante.
+### Mapa padrão
+
+Sem ensinar nada, já funciona assim:
+
+- **Notas 36 a 67** tocam os 32 sons direto: 36 = A1, 43 = A8, 44 = B1, e assim por diante, qualquer que seja o banco na tela.
 - **CC 20 a 27** movem os sliders 1 a 8 no modo atual.
-- No modo Poly, só o canal escolhido é ouvido.
+- **Canal:** SET-UP 23 > MIDI Channel. Em Omni, todos os canais tocam; com um canal escolhido, só ele toca o mapa padrão.
+- A força do toque só conta com o SET-UP 14 ligado. Soltar a tecla não corta o som, como no SP.
+
+### MIDI Learn (SET-UP 22)
+
+Qualquer controle do SP e do RJ-950 aprende uma mensagem do seu controlador: pads, sliders, knobs, os botões dos módulos, o teclado numérico, Programming, transporte e o knob Control do 950.
+
+1. Abra o SET-UP 22. O LCD mostra `MIDI Learn` / `Touch a Control`, e os controles que aprendem ganham um contorno tracejado.
+2. Toque no controle que você quer. Ele acende em azul e o LCD mostra o nome dele. No Learn, tocar só escolhe: a função não roda.
+3. Mexa no controlador: aperte um pad, gire um knob, mova um fader. A última mensagem que chegar fica no LCD (`Note 36 Ch10`, `CC 82   Ch01`...). Se chegar mais de uma, vale a última.
+4. Aperte **Enter** para salvar. O LCD mostra `Saved`. Depois é só tocar em outro controle e repetir.
+5. Para sair, aperte **Set-up** (ou Esc no teclado do computador).
+
+- Cada controle guarda uma mensagem, e cada mensagem vale para um controle só. Ensinar de novo substitui.
+- Tocar num controle mostra o que ele já aprendeu (`Now CC 82 Ch01`).
+- Para apagar um, escolha o controle e aperte Delete no teclado do computador. Para apagar tudo: SET-UP 23 > Clear MIDI Learn.
+- O Enter do painel salva quando há uma mensagem esperando. Sem mensagem, ele é escolhido para aprender, como os outros botões. O Set-up não aprende: é o caminho para sair.
+- Valem notas, CC, pitch bend e program change. Soltar a tecla, aftertouch e clock são ignorados no Learn.
+- Os pads do SP aprendem pela posição (pad 1 a 8 do banco na tela), igual a tocar no pad: seguem o multi mode e as páginas que pedem um pad.
+- Knob sem fim (encoder): o Learn percebe sozinho se ele manda passos ou posição. Gire um pouco antes de apertar Enter.
+- Botão que manda CC: valor 64 ou mais aperta, menos de 64 solta. Pelo MIDI, as setas do SP e o On/Off do 950 andam um passo por toque.
+- O que foi aprendido vale antes do mapa padrão. O mapa do Learn fica salvo no navegador, separado do projeto: abrir outro projeto não muda o seu controlador.
+
+### Com a Arturia MiniLab 3
+
+- Os pads mandam as notas 36 a 43, então já tocam o banco A pelo mapa padrão.
+- As teclas também mandam notas, que caem no mapa padrão e disparam sons. Se os pads da sua MiniLab saem num canal diferente das teclas (o comum é o 10), escolha esse canal no SET-UP 23 > MIDI Channel: os pads continuam e as teclas param. Ou ensine os pads pelo Learn.
+- Os knobs e faders mandam outros CCs: ensine pelo Learn os que quiser (sliders, Mix Volume, Gain, o Control do 950...).
 
 ## 16. RJ-950 (o rack embaixo do SP)
 
@@ -275,5 +312,5 @@ Cada pad do RJ-2000 manda uma nota (A1 = 36 ... D8 = 67), tocado ao vivo ou pelo
 
 ### O que ficou de fora do S950
 
-Para simplificar: keygroups e programas múltiplos (aqui é um programa só, um sample por pad), envelopes, LFO, crossfade de loop, time stretch e saídas separadas. O 950 não tem entrada MIDI própria: um teclado MIDI ligado no SP (seção 15) toca os pads, e os pads tocam o 950. O REVERSE não usa o loop.
+Para simplificar: keygroups e programas múltiplos (aqui é um programa só, um sample por pad), envelopes, LFO, crossfade de loop, time stretch e saídas separadas. O 950 não recebe notas próprias: um controlador MIDI toca os pads do SP (seção 15), e os pads tocam o 950. Os botões e knobs do 950, o Control incluído, aprendem MIDI pelo Learn do SP. O REVERSE não usa o loop.
 

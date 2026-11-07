@@ -37,7 +37,7 @@
               <li><b>11</b>Multi Pitch</li><li><b>12</b>Multi Level</li><li><b>13</b>Exit Multi Mode</li>
               <li><b>14</b>Dynamic Buttons</li><li><b>15</b>Define Mix</li><li><b>16</b>Select Mix</li>
               <li><b>17</b>Channel Assign</li><li><b>18</b>Decay/Tune Select</li><li><b>19</b>Loop/Truncate</li>
-              <li><b>20</b>Delete Sound</li><li><b>21</b>1st Song Step</li><li><b>22</b>MIDI Parameters</li>
+              <li><b>20</b>Delete Sound</li><li><b>21</b>1st Song Step</li><li><b>22</b>MIDI Learn</li>
               <li><b>23</b>Special</li>
             </ol>
           </div>
@@ -50,18 +50,8 @@
             <ol class="legend">
               <li><b>1</b>Save Sequences</li><li><b>2</b>Save Sounds</li><li><b>3</b>Load Sequences</li>
               <li><b>4</b>Load Segment #</li><li><b>5</b>Load Sounds</li><li><b>6</b>Load Sound #</li>
-              <li><b>7</b>Catalog Sequences</li><li><b>8</b>Catalog Sounds</li><li><b>9</b>Format/Copy Software</li>
+              <li><b>7</b>Catalog Sequences</li><li><b>8</b>Catalog Sounds</li>
               <li><b>0</b>Load Sequences and Sounds</li>
-            </ol>
-          </div>
-        </section>
-
-        <section class="mod mod-sync">
-          <h2>Sync</h2>
-          <div class="mod-body col">
-            <div class="keycol"><i class="led" data-led="sync"></i><button class="key" data-act="sync" aria-label="Sync"></button></div>
-            <ol class="legend">
-              <li><b>1</b>Internal</li><li><b>2</b>MIDI</li><li><b>3</b>SMPTE</li><li><b>4</b>Click</li>
             </ol>
           </div>
         </section>
@@ -280,7 +270,7 @@
     </section>
 
     <p class="credit">
-      RJ-2000 + RJ-950 <span id="version">b0.1</span> &middot; open source (GPL-3.0) &middot; inspirados no E-mu SP-1200 e no Akai S950 &middot;
+      RJ-2000 + RJ-950 <span id="version">b0.2</span> &middot; open source (GPL-3.0) &middot; inspirados no E-mu SP-1200 e no Akai S950 &middot;
       <a href="https://github.com/dcxaudio/rj-2000/blob/main/docs/manual.md" target="_blank" rel="noopener">manual</a>
     </p>
   </main>
@@ -294,6 +284,7 @@
   <script src="js/engine.js"></script>
   <script src="js/sequencer.js"></script>
   <script src="js/io.js"></script>
+  <script src="js/midimap.js"></script>
   <script src="js/s950.js"></script>
   <script src="js/app.js"></script>
 </body>
