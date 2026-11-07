@@ -24,6 +24,7 @@
       this.sel = null;           // controle escolhido para aprender
       this.cand = null;          // { key, vals } ultima mensagem recebida
       this.last = {};            // ultimo valor de cada CC absoluto ligado a um encoder
+      this.abs = {};             // ultima posicao (0 a 1) de cada knob comum ligado a um slider ou knob
       this.pos = {};             // posicao de cada slider ou knob movido por encoder
       this.hist = {};            // ultimos valores de cada CC salvo como posicao (para achar encoder)
       this.held = new Set();     // botoes apertados pelo MIDI
@@ -98,7 +99,7 @@
         if (b.sure) map[k].sure = true;
       });
       this.releaseAll();
-      this.map = map; this.last = {}; this.pos = {}; this.hist = {};
+      this.map = map; this.last = {}; this.abs = {}; this.pos = {}; this.hist = {};
       this.persist();
       if (this.onChange) this.onChange();
       return used.size;
@@ -144,7 +145,7 @@
       return t.name;
     }
 
-    clearAll() { this.map = {}; this.last = {}; this.pos = {}; this.hist = {}; this.persist(); }
+    clearAll() { this.map = {}; this.last = {}; this.abs = {}; this.pos = {}; this.hist = {}; this.persist(); }
 
     unbind(id) { Object.keys(this.map).forEach(k => { if (this.map[k].t === id) delete this.map[k]; }); }
 
@@ -216,13 +217,38 @@
         if (step) t.step(step);
         return;
       }
-      if (d == null) { t.set(m.v); delete this.pos[t.id]; return; }
+      if (d == null) {
+        if (m.type === "cc") { this.scale(t, m); return; }
+        t.set(m.v); delete this.pos[t.id]; return;
+      }
       // encoder num slider ou knob: soma numa posicao propria, para os valores em degraus
       // (decay, multi level) andarem tambem quando o encoder gira devagar
       const cur = t.get();
       let p = this.pos[t.id];
       if (p == null || Math.abs(p - cur) > 0.05) p = cur;
       p = clamp(p + d / 64, 0, 1);
+      this.pos[t.id] = p;
+      t.set(p);
+    }
+
+    /**
+     * Knob ou fader comum num slider ou knob da tela: o slider nao pula para a posicao
+     * do controlador (os sliders do SP mudam de funcao a cada modo e pad, entao quase
+     * nunca batem). Ele sai de onde esta e anda na proporcao do que falta ate a ponta,
+     * e os dois se encontram em 0 ou 127; dali em diante andam juntos (value scaling).
+     */
+    scale(t, m) {
+      const prev = this.abs[m.key];
+      this.abs[m.key] = m.v;
+      if (prev == null || m.v === prev) return;
+      // posicao propria, para os valores em degraus (decay, multi level) andarem aos poucos
+      const cur = t.get();
+      let p = this.pos[t.id];
+      if (p == null || Math.abs(p - cur) > 0.05) p = cur;
+      if (m.v > prev) p = prev >= 1 ? p : p + (1 - p) * (m.v - prev) / (1 - prev);
+      else p = prev <= 0 ? p : p - p * (prev - m.v) / prev;
+      if (m.v >= 1) p = 1; else if (m.v <= 0) p = 0;
+      p = clamp(p, 0, 1);
       this.pos[t.id] = p;
       t.set(p);
     }
