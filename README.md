@@ -2,7 +2,9 @@
 
 Sampler e sequenciador de 12 bits que roda no navegador, inspirado no **E-mu SP-1200**. É o primeiro instrumento da linha RJ da [DCX Audio](https://github.com/dcxaudio), um projeto open source e sem fins lucrativos de samplers e experimentos de produção musical, feito em Duque de Caxias (RJ).
 
-**Abrir o RJ-2000:** https://dcxaudio.github.io/rj-2000 *(quando o GitHub Pages estiver ligado)*
+**Abrir:** [RJ-2000](https://dcxaudio.github.io/rj-2000/) · [Classic](https://dcxaudio.github.io/rj-2000/classic/) · [DCX Studio](https://dcxaudio.github.io/dcx-studio/)
+
+O rack completo, com o RJ-950, o RJ-42 e o DCX 404 embaixo do SP, agora mora no [DCX Studio](https://dcxaudio.github.io/dcx-studio/). O **Classic** é a versão fiel ao SP-1200, no branch `classic`.
 
 ## O que ele faz
 
@@ -16,9 +18,7 @@ O RJ-2000 segue o painel e o fluxo de trabalho do SP-1200: quase tudo passa por 
 - **Song mode** editado passo a passo: repetições, mudança de tempo e de mix, subsongs e encadeamento.
 - **Sampling** pelo microfone ou pela entrada de áudio, com ganho, limiar e tamanho.
 - **Disk:** salva e carrega sequências e sons em arquivos separados, e carrega samples WAV, AIFF, MP3, OGG e FLAC em qualquer pad. O estado também fica salvo no navegador.
-- **Teclado do computador e MIDI** (Chrome e Edge), com **MIDI Learn**: qualquer controle do SP e do RJ-950 aprende um pad, knob ou fader do seu controlador.
-- **RJ-950 embaixo do SP:** um sampler de rack inspirado no **Akai S950**, como no estúdio dos anos 80 e 90. Os pads do SP tocam os samples longos do 950 (até 48 s), com início, fim, loop, tune, reverse e filtro passa-baixa. LCD de 2 x 40, knob Control e disquete para soltar arquivos.
-- **RJ-42 embaixo do 950:** um looper de rack que não existiu na época. Solte uma música, ele acha o BPM, e você tira loops de 1, 2, 4 ou 8 compassos no tempo que quiser (mudando o tom junto ou mantendo), guarda até 8 e manda para o SP, para o 950 ou para WAV/MP3.
+- **Teclado do computador e MIDI** (Chrome e Edge), com **MIDI Learn**: qualquer controle do SP aprende um pad, knob ou fader do seu controlador.
 
 ## Como usar
 
@@ -29,8 +29,8 @@ Para rodar no seu computador, baixe o repositório e abra o `index.html` no nave
 ## Estrutura
 
 ```
-index.html          interface e o Studio (monta o rack: host e os três aparelhos)
-core/               código comum a todos os aparelhos (vai virar o dcx-core)
+index.html          interface (monta o host do RJ-2000 sozinho)
+core/               código comum (a base do dcx-core; vira o submódulo dele depois)
   css/base.css      cores, fontes, teclas, LEDs, knobs, LCD e rack
   fonts/            Archivo Narrow e VT323 (woff2, licença OFL junto)
   js/dsp.js         reamostragem, redução de bits, WAV, base64
@@ -40,15 +40,14 @@ core/               código comum a todos os aparelhos (vai virar o dcx-core)
   js/midi.js        entrada MIDI (ignora as portas MCU/HUI/DAW)
   js/midimap.js     MIDI Learn: mapa de mensagens MIDI para os controles
   js/host.js        host: liga os aparelhos (saída, store, MIDI, envio entre eles)
-css/rj2000.css      visual do SP, do 950 e do 42
+css/rj2000.css      visual do SP
 js/engine.js        motor de áudio do SP (canais, filtros, afinação drop-sample)
 js/sequencer.js     sequenciador, auto correct, swing, song mode
 js/project.js       sons, memória, segmentos, songs, mixes, arquivos
 js/io.js            microfone (sampling) e o mapa MIDI padrão do SP
-js/s950.js          RJ-950: sampler de rack, memória, vozes, filtro e páginas
-js/r42.js           RJ-42: looper, detecção de BPM, time stretch, memórias e envio
 js/app.js           painel, LCD e páginas (Set-up, Disk, Sample)
 js/kit.js           kit padrão embutido (gerado)
+.github/workflows/pages.yml  publica o main na raiz e o branch classic em /classic/
 samples/boom-bap-01 kit padrão (banco A), WAV, CC BY 4.0 / CC0
 samples/choro-01    melodias (banco B), WAV, domínio público
 samples/dcx-kit-01  kit sintetizado (reserva), CC0
@@ -77,7 +76,7 @@ Não incluímos o manual original no repositório porque ele é material protegi
 - [Manual do E-mu SP-1200 (ManualsLib)](https://www.manualslib.com/manual/827730/E-Mu-Sp1200.html)
 - [Documentação do SP-1200 da Rossum Electro-Music (reedição de 2021)](https://www.rossum-electro.com/support/documentation)
 
-Sobre o Akai S950, que inspirou o RJ-950, veja [docs/s950-referencia.md](docs/s950-referencia.md).
+O RJ-950 (inspirado no Akai S950) e o RJ-42 têm repositórios próprios: [rj-950](https://github.com/dcxaudio/rj-950) e [rj-42](https://github.com/dcxaudio/rj-42).
 
 ## Contribuindo
 

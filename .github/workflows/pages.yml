@@ -1,0 +1,55 @@
+# Publica o RJ-2000 no GitHub Pages: o main na raiz e o branch classic em /classic/.
+# O branch classic so e lido (checkout), nunca alterado.
+# No repositorio: Settings > Pages > Source: GitHub Actions.
+name: Pages
+
+on:
+  push:
+    branches: [main, classic]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: main na raiz
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+          path: site
+
+      - name: classic em /classic/
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: classic
+          path: site/classic
+
+      - name: limpar o que nao vai para o site
+        run: |
+          rm -rf site/.git site/.github site/classic/.git site/classic/.github
+          touch site/.nojekyll site/classic/.nojekyll
+
+      - uses: actions/configure-pages@v6.0.0
+
+      - uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5.0.1
