@@ -11,6 +11,10 @@
  *   Canais 5 e 6: passa-baixa fixo, corte mais alto.
  *   Canais 7 e 8: sem filtro.
  * - Saida de mix mono.
+ * - Bancos A/B/C/D separados (DCX Studio, RJ-1202): alem da saida de mix, cada banco
+ *   (indice do som / 8) pode sair numa saida propria. Um banco "roteado"
+ *   (setBankRouted) sai da mix e vai so para a saida dele; sem rota nenhuma o
+ *   som e o mesmo de antes, amostra por amostra.
  */
 window.RJ = window.RJ || {};
 
@@ -21,11 +25,15 @@ RJ.FILTER = {
 };
 
 RJ.Engine = class {
-  /** output: saida comum do host (RJ.Output); dest: () => no onde o SP entra (host.output). */
-  constructor(project, output, dest) {
+  /**
+   * output: saida comum do host (RJ.Output); dest: () => no onde o SP entra (host.output).
+   * bankDest: b (0 a 3) => no da saida do banco (host.output("rj2000-A")...); sem ele, nao ha saidas por banco.
+   */
+  constructor(project, output, dest, bankDest) {
     this.project = project;
     this.output = output || new RJ.Output();
     this.dest = dest || (() => this.output.limiter);
+    this.bankDest = bankDest || null;
     this.ctx = null;
     this.graph = null;
     this.cache = new Map();
@@ -36,6 +44,7 @@ RJ.Engine = class {
     if (!this.ctx) {
       this.ctx = this.output.ensure();
       this.graph = this.buildGraph(this.ctx);
+      if (this.pendingBanks) { this.pendingBanks.forEach((on, b) => this.setBankRouted(b, on)); this.pendingBanks = null; }
     }
     if (this.ctx.state === "suspended") this.ctx.resume();
     return this.ctx;
@@ -46,6 +55,15 @@ RJ.Engine = class {
   buildGraph(ctx) {
     const g = { ctx, inputs: [], filters: [], voices: new Array(8).fill(null) };
     g.mix = ctx.createGain();
+    // bancos: por canal, uma porta no caminho da mix (wm, sempre 1 enquanto nenhum banco esta roteado)
+    // e uma porta por banco para a saida dele (bt, sempre 0 ate o banco ser roteado)
+    g.wm = []; g.bt = []; g.sched = []; g.routed = [false, false, false, false]; g.nRouted = 0;
+    g.bankOut = [];
+    for (let b = 0; b < 4; b++) {
+      const bo = ctx.createGain();
+      if (this.bankDest) { const d = this.bankDest(b); if (d) bo.connect(d); }
+      g.bankOut.push(bo);
+    }
     const nyq = ctx.sampleRate * 0.45;
     for (let ch = 0; ch < 8; ch++) {
       const input = ctx.createGain();
@@ -60,7 +78,11 @@ RJ.Engine = class {
           last.connect(f); last = f; filters.push(f);
         }
       }
-      last.connect(g.mix);
+      const wm = ctx.createGain();
+      last.connect(wm); wm.connect(g.mix);
+      g.wm.push(wm);
+      g.bt.push([0, 1, 2, 3].map(b => { const t = ctx.createGain(); t.gain.value = 0; last.connect(t); t.connect(g.bankOut[b]); return t; }));
+      g.sched.push([{ when: 0, bank: -1 }]);
       g.inputs.push(input);
       g.filters.push(filters);
     }
@@ -79,7 +101,36 @@ RJ.Engine = class {
     if (!g) return;
     const p = this.project, t = g.ctx.currentTime;
     g.out.gain.setTargetAtTime(Math.pow(p.masterVol, 2) * 1.1, t, 0.01);
+    g.bankOut.forEach(bo => bo.gain.setTargetAtTime(Math.pow(p.masterVol, 2) * 1.1, t, 0.01));
     g.met.gain.setTargetAtTime(Math.pow(p.metVol, 2), t, 0.01);
+  }
+
+  /**
+   * Tira o banco b (0 a 3 = A a D) da mix e manda so para a saida dele, ou devolve para a mix.
+   * Quem roteia a saida do banco (host.route(..., { dry: false })) avisa aqui. Vale para o som que toca
+   * agora e para os disparos ja agendados.
+   */
+  setBankRouted(b, on) {
+    const g = this.graph;
+    on = !!on;
+    if (!g) { this.pendingBanks = this.pendingBanks || []; this.pendingBanks[b] = on; return; }
+    if (g.routed[b] === on) return;
+    g.routed[b] = on;
+    g.nRouted += on ? 1 : -1;
+    for (let ch = 0; ch < 8; ch++) this.gateChannel(g, ch);
+  }
+
+  /** Reescreve as portas do canal ch a partir da lista de disparos (qual banco toca em cada instante). */
+  gateChannel(g, ch) {
+    const t = g.ctx.currentTime, ev = g.sched[ch];
+    while (ev.length > 1 && ev[1].when <= t) ev.shift();
+    const params = [g.wm[ch].gain].concat(g.bt[ch].map(x => x.gain));
+    params.forEach(p => p.cancelScheduledValues(t));
+    ev.forEach((e, i) => {
+      const when = i === 0 ? t : e.when, r = e.bank >= 0 && g.routed[e.bank];
+      g.wm[ch].gain.setValueAtTime(r ? 0 : 1, when);
+      g.bt[ch].forEach((x, b) => x.gain.setValueAtTime(r && b === e.bank ? 1 : 0, when));
+    });
   }
 
   /** Buffer de reproducao com a afinacao aplicada por drop-sample. */
@@ -102,6 +153,16 @@ RJ.Engine = class {
     return buf;
   }
 
+  /** Anota que, a partir de when, o canal ch toca um som do banco bank. */
+  noteBank(g, ch, bank, when) {
+    const ev = g.sched[ch];
+    let i = ev.length;
+    while (i > 0 && ev[i - 1].when > when) i--;
+    if (ev[i - 1] && ev[i - 1].bank === bank) return;      // o mesmo banco ja vale daqui em diante
+    ev.splice(i, 0, { when, bank });
+    if (g.nRouted) this.gateChannel(g, ch);
+  }
+
   decayTime(decay) { return 0.004 + Math.pow(decay / 31, 2.4) * 1.1; }
 
   /**
@@ -121,6 +182,7 @@ RJ.Engine = class {
     const when = Math.max(opts.when || 0, ctx.currentTime);
 
     const ch = snd.channel & 7;
+    this.noteBank(g, ch, s >> 3, when);
 
     const prev = g.voices[ch];
     if (prev) {

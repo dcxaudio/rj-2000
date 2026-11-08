@@ -34,7 +34,8 @@ window.RJ = window.RJ || {};
       this.host = host;
       this.p = RJ.createProject();
       // o SP entra no limitador comum pela saida dele no host (host.output("rj2000"))
-      this.engine = new RJ.Engine(this.p, host.engine, () => host.output());
+      // cada banco (A a D) tambem tem uma saida propria: host.output("rj2000-A") ... "rj2000-D" (so soa quando o banco e roteado, ex. no RJ-1202)
+      this.engine = new RJ.Engine(this.p, host.engine, () => host.output(), b => host.output("rj2000-" + "ABCD"[b]));
       this.seq = new RJ.Sequencer(this.p, this.engine);
       this.sampler = new RJ.Sampler(this.engine);
       // a entrada MIDI e do host; o SP so pendura o mapa padrao dele (notas 36-67, CC 20-27)
