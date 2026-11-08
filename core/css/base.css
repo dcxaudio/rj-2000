@@ -1,0 +1,174 @@
+/* DCX Audio - CSS base (dcx-core)
+ *
+ * O que todo aparelho usa: cores, reset, teclas, LEDs, knobs, o LCD e o rack.
+ * Carregar antes do CSS do aparelho, que acrescenta e ajusta (tamanhos, telas menores).
+ * As fontes (Archivo Narrow e VT323, licenca SIL OFL 1.1) ficam em core/fonts/,
+ * com a licenca de cada uma (OFL-*.txt). Funciona offline. Subsets latin e latin-ext,
+ * os mesmos que o Google Fonts servia.
+ */
+/* Archivo Narrow (variavel, um arquivo cobre os pesos 400 a 700) */
+@font-face {
+  font-family: "Archivo Narrow"; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url("../fonts/archivo-narrow-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Archivo Narrow"; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url("../fonts/archivo-narrow-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* VT323 (o LCD) */
+@font-face {
+  font-family: "VT323"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/vt323-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "VT323"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/vt323-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ---------------------------------------------------------------- tokens, reset e foco */
+:root {
+  --page: #2a2a29;
+  --page-ink: #9a9a94;
+  --case: #141414;
+  --face: #1c1c1c;
+  --strip: #cfcfc9;
+  --strip-ink: #1c1c1c;
+  --ink: #d9d9d3;
+  --ink-dim: #a3a39d;
+  --rule: #4b8ad0;
+  --key: #ebe8da;
+  --key-edge: #b9b6a8;
+  --key-red: #d3302a;
+  --key-red-edge: #8f1d19;
+  --pad: #111;
+  --pad-edge: #000;
+  --led-off: #3a1c1a;
+  --led-on: #ff3b26;
+  --lcd-glass: #b3c25c;
+  --lcd-ink: #26300f;
+  --lcd-off: rgba(38, 48, 15, 0.07);
+  --knob: #0d0d0d;
+  --font: "Archivo Narrow", "Helvetica Neue", Arial, sans-serif;
+  --lcd-font: "VT323", "Courier New", monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root { --page: #dcdcd6; --page-ink: #55554f; }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+}
+button { font-family: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, .knob:focus-visible, .fader:focus-visible { outline: 2px solid var(--rule); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------- teclas, LEDs, legendas e knobs */
+/* ---------------------------------------------------------------- teclas, LEDs, legendas */
+.key {
+  width: 40px; height: 38px; padding: 0;
+  border: 0; border-radius: 3px;
+  background: linear-gradient(#f4f2e6, var(--key));
+  box-shadow: 0 3px 0 var(--key-edge), 0 5px 8px rgba(0,0,0,.45);
+  transition: transform .04s, box-shadow .04s;
+  touch-action: manipulation;
+}
+.key:active, .key.down { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge), 0 2px 4px rgba(0,0,0,.45); }
+.key-red { background: linear-gradient(#e4413a, var(--key-red)); box-shadow: 0 3px 0 var(--key-red-edge), 0 5px 8px rgba(0,0,0,.45); }
+.key-red:active, .key-red.down { box-shadow: 0 1px 0 var(--key-red-edge), 0 2px 4px rgba(0,0,0,.45); }
+
+.led {
+  display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #5a2c28, var(--led-off));
+  box-shadow: 0 0 0 2px #0c0c0c;
+  flex: none;
+}
+.led.on { background: radial-gradient(circle at 35% 35%, #ffd0c4, var(--led-on) 55%); box-shadow: 0 0 0 2px #0c0c0c, 0 0 10px 2px rgba(255, 59, 38, .55); }
+.led.blink { animation: blink .5s steps(1) infinite; }
+@keyframes blink { 50% { background: radial-gradient(circle at 35% 35%, #5a2c28, var(--led-off)); box-shadow: 0 0 0 2px #0c0c0c; } }
+.led-slot { display: inline-block; width: 10px; height: 10px; }
+
+.keycol { display: flex; flex-direction: column; align-items: center; gap: 12px; flex: none; }
+.cap { font-size: 11px; color: var(--ink); text-align: center; line-height: 1.2; }
+.kc { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+/* ---------------------------------------------------------------- knobs */
+.knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.knob {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, #3a3a3a, var(--knob) 62%);
+  box-shadow: 0 0 0 3px #050505, 0 6px 10px rgba(0,0,0,.6);
+  position: relative; touch-action: none; cursor: ns-resize;
+}
+.knob i {
+  position: absolute; left: 50%; top: 6px; width: 3px; height: 15px; margin-left: -1.5px;
+  background: #eee; border-radius: 2px;
+  transform-origin: 50% 20px;
+}
+
+/* ---------------------------------------------------------------- LCD (bezel, vidro e celulas) */
+.lcd-bezel {
+  background: #0b0b0b; padding: 9px 11px; border-radius: 3px;
+  box-shadow: inset 0 0 0 2px #262626, 0 1px 0 #333;
+}
+.lcd {
+  background: radial-gradient(ellipse at 50% 40%, #c4d36b, var(--lcd-glass) 70%);
+  color: var(--lcd-ink);
+  padding: 7px 9px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 14px rgba(40, 60, 0, .35);
+  font-family: var(--lcd-font);
+  font-size: 24px; line-height: 1;
+}
+.lcd-row { display: grid; grid-template-columns: repeat(16, 1fr); gap: 1px; height: 26px; }
+.lcd-row + .lcd-row { margin-top: 3px; }
+.lcd-row span {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--lcd-off); border-radius: 1px; overflow: hidden; position: relative;
+}
+.lcd-row span.cur { animation: cursor 1s steps(1) infinite; }
+@keyframes cursor { 50% { background: var(--lcd-ink); color: var(--lcd-glass); } }
+.lcd-row span.bar::after {
+  content: ""; position: absolute; left: 1px; right: 1px; bottom: 2px;
+  height: calc(var(--h) * 1%); background: var(--lcd-ink);
+}
+
+/* ---------------------------------------------------------------- rack 19" (gabinete do 950 e do 42): cores, corpo e orelhas */
+:root {
+  --rack-face: #222324;
+  --rack-ear: #1c1d1e;
+  --rack-ink: #d8dad5;
+  --rack-btn: #c3c5c1;
+  --rack-btn-edge: #7d7f7b;
+  --rack-key: #8796a6;
+  --rack-key-edge: #485462;
+  --rack-block: #121314;
+}
+.rack {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px;
+  margin-top: 18px;
+  background: var(--rack-face); border-radius: 4px;
+  box-shadow: 0 1px 0 #34363a inset, 0 -1px 0 #0b0b0b inset, 0 20px 44px rgba(0,0,0,.45);
+  transition: box-shadow .15s;
+}
+.rack.focus { box-shadow: 0 0 0 2px var(--rule), 0 20px 44px rgba(0,0,0,.45); }
+.rack-ear {
+  background: linear-gradient(90deg, #18191a, var(--rack-ear) 40%, #262729);
+  display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+  padding: 24px 0; border-radius: 4px 0 0 4px;
+}
+.rack-ear:last-child { border-radius: 0 4px 4px 0; background: linear-gradient(270deg, #18191a, var(--rack-ear) 40%, #262729); }
+.rack-ear i { width: 15px; height: 9px; border-radius: 5px; background: #060606; box-shadow: inset 0 1px 2px #000, 0 1px 0 #34363a; }
+
+/* ---------------------------------------------------------------- MIDI Learn: os controles que aprendem ficam tracejados; o escolhido acende */
+body.learning [data-learn] { outline: 1px dashed rgba(75, 138, 208, .6); outline-offset: 2px; }
+body.learning [data-learn].learn-sel { outline: 2px solid var(--rule); outline-offset: 3px; box-shadow: 0 0 14px 2px rgba(75, 138, 208, .75); }

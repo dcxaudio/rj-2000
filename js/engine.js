@@ -68,7 +68,7 @@ RJ.Engine = class {
     g.mix.connect(g.out);
     g.met = ctx.createGain();
     g.met.connect(g.out);
-    // o limitador agora e da saida comum (host.js): o SP entra nele pela saida dele
+    // o limitador agora e da saida comum (core/js/output.js): o SP entra nele pela saida dele
     g.limiter = this.output.limiter;
     g.out.connect(this.dest());
     this.applyVolumes(g);

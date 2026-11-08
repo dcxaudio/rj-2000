@@ -7,6 +7,11 @@
  *   engine          saida comum: ensure(), ctx, ready, limiter
  *   store           IndexedDB com o prefixo da pagina e do aparelho
  *   learn           MIDI Learn da pagina (um mapa por pagina)
+ *   midi            entrada MIDI da pagina (RJ.Midi, core/js/midi.js). O host liga o
+ *                   Learn nela; um aparelho pode pendurar o mapa padrao dele
+ *                   (midi.addDefaults). Liga sozinho ao ligar a regua se ja foi
+ *                   ligado antes (learn.enabled).
+ *   enableMidi()    liga o MIDI do navegador e lembra para o proximo boot
  *   on              a regua de tomadas esta ligada
  *   targets()       para onde da para mandar som: [{ id, label }]; sempre tem "file"
  *   send(id, wav)   manda um WAV (File) para outro aparelho; devolve "ok", "off" ou "missing"
@@ -28,35 +33,6 @@
 (function () {
   "use strict";
   const RJ = window.RJ;
-
-  /* ------------------------------------------------------------ saida comum */
-
-  RJ.makeLimiter = function (ctx) {
-    // saturacao suave so perto de 0 dBFS, para os aparelhos juntos nao estourarem
-    const lim = ctx.createWaveShaper();
-    const curve = new Float32Array(2048);
-    for (let i = 0; i < curve.length; i++) {
-      const x = (i / (curve.length - 1)) * 2 - 1, a = Math.abs(x);
-      curve[i] = a < 0.7 ? x : Math.sign(x) * (0.7 + 0.28 * Math.tanh((a - 0.7) / 0.28));
-    }
-    lim.curve = curve;
-    return lim;
-  };
-
-  RJ.Output = class {
-    constructor() { this.ctx = null; this.limiter = null; }
-    ensure() {
-      if (!this.ctx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AC({ latencyHint: "interactive" });
-        this.limiter = RJ.makeLimiter(this.ctx);
-        this.limiter.connect(this.ctx.destination);
-      }
-      if (this.ctx.state === "suspended") this.ctx.resume();
-      return this.ctx;
-    }
-    get ready() { return !!this.ctx; }
-  };
 
   /* ------------------------------------------------------------ store com prefixo */
 
@@ -98,6 +74,7 @@
      * opts.migrate    { chaveAntiga: chaveNova } copiado na primeira abertura
      * opts.playing    () => bool
      * opts.padUsed    i => bool
+     * opts.midiIgnore lista no lugar de RJ.MIDI_IGNORE (entradas MIDI ignoradas)
      */
     constructor(opts = {}) {
       this.page = opts.page || "studio";
@@ -105,6 +82,9 @@
       this.engine = new RJ.Output();
       this.store = RJ.prefixedStore(this.page + "/", this.ready);
       this.learn = new RJ.MidiMap(this.store);
+      // a entrada MIDI e da pagina: o Learn vem primeiro, depois os mapas padrao dos aparelhos
+      this.midi = new RJ.Midi({ ignore: opts.midiIgnore });
+      this.midi.onMessage = d => this.on && this.learn.handle(d);
       this.on = false;
       this.devices = new Map();   // id -> { dev, label, receive }
       this.outs = new Map();
@@ -129,7 +109,15 @@
       if (this.on) return;
       this.on = true;
       this.engine.ensure();
+      this.learn.load().then(() => { if (this.learn.enabled) this.enableMidi().catch(() => {}); });
       this.devices.forEach(d => d.dev.boot && d.dev.boot());
+    }
+
+    /** Liga o MIDI do navegador. Depois da primeira vez, liga sozinho a cada power(). */
+    async enableMidi() {
+      const ins = await this.midi.enable();
+      if (!this.learn.enabled) { this.learn.enabled = true; this.learn.persist(); }
+      return ins;
     }
 
     saveAll() { this.devices.forEach(d => { try { d.dev.saveNow && d.dev.saveNow(); } catch (e) { console.warn(e); } }); }
@@ -211,6 +199,8 @@
         engine: h.engine,
         store: RJ.prefixedStore(prefix, h.ready),
         learn: h.learn,
+        midi: h.midi,
+        enableMidi: () => h.enableMidi(),
         get on() { return h.on; },
         power: () => h.power(),
         targets: () => h.targets(id),

@@ -201,12 +201,6 @@ RJ.makeTruncPermanent = function (snd) {
   snd.ver++;
 };
 
-RJ.decodeAudio = function (ctx, arrayBuffer) {
-  return new Promise((resolve, reject) => {
-    ctx.decodeAudioData(arrayBuffer.slice(0), b => resolve({ raw: RJ.dsp.toMono(b), rate: b.sampleRate }), reject);
-  });
-};
-
 RJ.loadDefaultKit = async function (p, ctx) {
   if (!RJ.DEFAULT_KIT) return;
   for (const e of RJ.DEFAULT_KIT) {
@@ -307,40 +301,3 @@ RJ.deserialize = function (json) {
   RJ.applySeq(p, d.seq);
   return p;
 };
-
-/* ---------------------------------------------------------------- armazenamento local (IndexedDB) */
-
-RJ.store = (function () {
-  const DB = "rj2000", STORE = "projects";
-  function open() {
-    return new Promise((resolve, reject) => {
-      if (!window.indexedDB) return reject(new Error("IndexedDB indisponivel"));
-      const req = indexedDB.open(DB, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(STORE);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-  async function put(key, value) {
-    try {
-      const db = await open();
-      await new Promise((res, rej) => {
-        const tx = db.transaction(STORE, "readwrite");
-        tx.objectStore(STORE).put(value, key);
-        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
-      });
-      return true;
-    } catch (e) { console.warn("Nao foi possivel salvar no navegador", e); return false; }
-  }
-  async function get(key) {
-    try {
-      const db = await open();
-      return await new Promise((res, rej) => {
-        const tx = db.transaction(STORE, "readonly");
-        const r = tx.objectStore(STORE).get(key);
-        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
-      });
-    } catch (e) { return null; }
-  }
-  return { put, get };
-})();

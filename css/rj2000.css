@@ -1,46 +1,7 @@
-/* RJ-2000 - painel no layout do SP-1200, em preto */
-
-:root {
-  --page: #2a2a29;
-  --page-ink: #9a9a94;
-  --case: #141414;
-  --face: #1c1c1c;
-  --strip: #cfcfc9;
-  --strip-ink: #1c1c1c;
-  --ink: #d9d9d3;
-  --ink-dim: #a3a39d;
-  --rule: #4b8ad0;
-  --key: #ebe8da;
-  --key-edge: #b9b6a8;
-  --key-red: #d3302a;
-  --key-red-edge: #8f1d19;
-  --pad: #111;
-  --pad-edge: #000;
-  --led-off: #3a1c1a;
-  --led-on: #ff3b26;
-  --lcd-glass: #b3c25c;
-  --lcd-ink: #26300f;
-  --lcd-off: rgba(38, 48, 15, 0.07);
-  --knob: #0d0d0d;
-  --font: "Archivo Narrow", "Helvetica Neue", Arial, sans-serif;
-  --lcd-font: "VT323", "Courier New", monospace;
-}
-@media (prefers-color-scheme: light) {
-  :root { --page: #dcdcd6; --page-ink: #55554f; }
-}
-
-* { box-sizing: border-box; }
-html, body { margin: 0; }
-body {
-  background: var(--page);
-  color: var(--ink);
-  font-family: var(--font);
-  -webkit-font-smoothing: antialiased;
-  -webkit-tap-highlight-color: transparent;
-  min-height: 100vh;
-}
-button { font-family: inherit; color: inherit; cursor: pointer; }
-button:focus-visible, .knob:focus-visible, .fader:focus-visible { outline: 2px solid var(--rule); outline-offset: 2px; }
+/* RJ-2000 - painel no layout do SP-1200, em preto
+ * As cores, o reset, teclas, LEDs, knobs, LCD e rack vem do core/css/base.css,
+ * carregado antes deste. Aqui fica o que e do SP, do 950 e do 42.
+ */
 
 /* ---------------------------------------------------------------- tela de ligar */
 .power {
@@ -110,75 +71,8 @@ button:focus-visible, .knob:focus-visible, .fader:focus-visible { outline: 2px s
 .legend b { display: inline-block; min-width: 18px; font-weight: 500; }
 .mod-sample .mod-body { justify-content: space-between; }
 
-/* ---------------------------------------------------------------- teclas, LEDs, legendas */
-.key {
-  width: 40px; height: 38px; padding: 0;
-  border: 0; border-radius: 3px;
-  background: linear-gradient(#f4f2e6, var(--key));
-  box-shadow: 0 3px 0 var(--key-edge), 0 5px 8px rgba(0,0,0,.45);
-  transition: transform .04s, box-shadow .04s;
-  touch-action: manipulation;
-}
-.key:active, .key.down { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge), 0 2px 4px rgba(0,0,0,.45); }
-.key-red { background: linear-gradient(#e4413a, var(--key-red)); box-shadow: 0 3px 0 var(--key-red-edge), 0 5px 8px rgba(0,0,0,.45); }
-.key-red:active, .key-red.down { box-shadow: 0 1px 0 var(--key-red-edge), 0 2px 4px rgba(0,0,0,.45); }
-
-.led {
-  display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #5a2c28, var(--led-off));
-  box-shadow: 0 0 0 2px #0c0c0c;
-  flex: none;
-}
-.led.on { background: radial-gradient(circle at 35% 35%, #ffd0c4, var(--led-on) 55%); box-shadow: 0 0 0 2px #0c0c0c, 0 0 10px 2px rgba(255, 59, 38, .55); }
-.led.blink { animation: blink .5s steps(1) infinite; }
-@keyframes blink { 50% { background: radial-gradient(circle at 35% 35%, #5a2c28, var(--led-off)); box-shadow: 0 0 0 2px #0c0c0c; } }
-.led-slot { display: inline-block; width: 10px; height: 10px; }
-
-.keycol { display: flex; flex-direction: column; align-items: center; gap: 12px; flex: none; }
-.cap { font-size: 11px; color: var(--ink); text-align: center; line-height: 1.2; }
-.kc { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-
-/* ---------------------------------------------------------------- knobs */
-.knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.knob {
-  width: 52px; height: 52px; border-radius: 50%;
-  background: radial-gradient(circle at 40% 30%, #3a3a3a, var(--knob) 62%);
-  box-shadow: 0 0 0 3px #050505, 0 6px 10px rgba(0,0,0,.6);
-  position: relative; touch-action: none; cursor: ns-resize;
-}
-.knob i {
-  position: absolute; left: 50%; top: 6px; width: 3px; height: 15px; margin-left: -1.5px;
-  background: #eee; border-radius: 2px;
-  transform-origin: 50% 20px;
-}
-
 /* ---------------------------------------------------------------- master control */
 .mod-master { display: flex; flex-direction: column; align-items: stretch; gap: 22px; }
-.lcd-bezel {
-  background: #0b0b0b; padding: 9px 11px; border-radius: 3px;
-  box-shadow: inset 0 0 0 2px #262626, 0 1px 0 #333;
-}
-.lcd {
-  background: radial-gradient(ellipse at 50% 40%, #c4d36b, var(--lcd-glass) 70%);
-  color: var(--lcd-ink);
-  padding: 7px 9px;
-  border-radius: 2px;
-  box-shadow: inset 0 0 14px rgba(40, 60, 0, .35);
-  font-family: var(--lcd-font);
-  font-size: 24px; line-height: 1;
-}
-.lcd-row { display: grid; grid-template-columns: repeat(16, 1fr); gap: 1px; height: 26px; }
-.lcd-row + .lcd-row { margin-top: 3px; }
-.lcd-row span {
-  display: flex; align-items: center; justify-content: center;
-  background: var(--lcd-off); border-radius: 1px; overflow: hidden; position: relative;
-}
-.lcd-row span.cur { animation: cursor 1s steps(1) infinite; }
-@keyframes cursor { 50% { background: var(--lcd-ink); color: var(--lcd-glass); } }
-.lcd-row span.bar::after {
-  content: ""; position: absolute; left: 1px; right: 1px; bottom: 2px;
-  height: calc(var(--h) * 1%); background: var(--lcd-ink);
-}
 
 .nav4 { display: grid; grid-template-columns: repeat(4, 1fr); justify-items: center; }
 .knobs { display: flex; justify-content: space-around; }
@@ -319,31 +213,6 @@ button:focus-visible, .knob:focus-visible, .fader:focus-visible { outline: 2px s
 }
 
 /* ================================================================ RJ-950: rack embaixo do SP */
-:root {
-  --r9-face: #222324;
-  --r9-ear: #1c1d1e;
-  --r9-ink: #d8dad5;
-  --r9-btn: #c3c5c1;
-  --r9-btn-edge: #7d7f7b;
-  --r9-key: #8796a6;
-  --r9-key-edge: #485462;
-  --r9-block: #121314;
-}
-.rack {
-  display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px;
-  margin-top: 18px;
-  background: var(--r9-face); border-radius: 4px;
-  box-shadow: 0 1px 0 #34363a inset, 0 -1px 0 #0b0b0b inset, 0 20px 44px rgba(0,0,0,.45);
-  transition: box-shadow .15s;
-}
-.rack.focus { box-shadow: 0 0 0 2px var(--rule), 0 20px 44px rgba(0,0,0,.45); }
-.r9-ear {
-  background: linear-gradient(90deg, #18191a, var(--r9-ear) 40%, #262729);
-  display: flex; flex-direction: column; justify-content: space-between; align-items: center;
-  padding: 24px 0; border-radius: 4px 0 0 4px;
-}
-.r9-ear:last-child { border-radius: 0 4px 4px 0; background: linear-gradient(270deg, #18191a, var(--r9-ear) 40%, #262729); }
-.r9-ear i { width: 15px; height: 9px; border-radius: 5px; background: #060606; box-shadow: inset 0 1px 2px #000, 0 1px 0 #34363a; }
 .r9-face {
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr) auto 190px;
@@ -367,12 +236,12 @@ button:focus-visible, .knob:focus-visible, .fader:focus-visible { outline: 2px s
 .r9-knobs { grid-area: knobs; }
 .r9-jacks { grid-area: jacks; }
 
-.r9-cap { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--r9-ink); text-align: center; line-height: 1.15; }
-.r9-maker { font-weight: 700; font-size: 28px; letter-spacing: .02em; color: var(--r9-ink); line-height: 1; transform: scaleY(1.1); transform-origin: left bottom; }
-.r9-sub { font-size: 9px; letter-spacing: .28em; text-transform: uppercase; color: var(--r9-ink); }
+.r9-cap { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--rack-ink); text-align: center; line-height: 1.15; }
+.r9-maker { font-weight: 700; font-size: 28px; letter-spacing: .02em; color: var(--rack-ink); line-height: 1; transform: scaleY(1.1); transform-origin: left bottom; }
+.r9-sub { font-size: 9px; letter-spacing: .28em; text-transform: uppercase; color: var(--rack-ink); }
 .r9-model {
   font-weight: 700; font-size: 30px; line-height: 1; letter-spacing: .06em;
-  color: transparent; -webkit-text-stroke: 1.2px var(--r9-ink);
+  color: transparent; -webkit-text-stroke: 1.2px var(--rack-ink);
 }
 
 /* power e disquete */
@@ -426,18 +295,18 @@ button:focus-visible, .knob:focus-visible, .fader:focus-visible { outline: 2px s
 .r9-mode { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .r9-t {
   min-height: 20px; display: flex; align-items: flex-end; justify-content: center; text-align: center;
-  font-size: 9px; line-height: 1.1; text-transform: uppercase; letter-spacing: .05em; color: var(--r9-ink);
+  font-size: 9px; line-height: 1.1; text-transform: uppercase; letter-spacing: .05em; color: var(--rack-ink);
 }
 .r9-btn {
   width: 36px; height: 24px; padding: 0; border: 0; border-radius: 2px;
-  background: linear-gradient(#dfe1dd, var(--r9-btn));
-  box-shadow: 0 2px 0 var(--r9-btn-edge), 0 4px 6px rgba(0,0,0,.5);
+  background: linear-gradient(#dfe1dd, var(--rack-btn));
+  box-shadow: 0 2px 0 var(--rack-btn-edge), 0 4px 6px rgba(0,0,0,.5);
   touch-action: manipulation; transition: transform .04s, box-shadow .04s;
 }
-.r9-btn.down { transform: translateY(2px); box-shadow: 0 0 0 var(--r9-btn-edge), 0 1px 3px rgba(0,0,0,.5); }
+.r9-btn.down { transform: translateY(2px); box-shadow: 0 0 0 var(--rack-btn-edge), 0 1px 3px rgba(0,0,0,.5); }
 
 /* tabela impressa no painel */
-.r9-chart { width: 100%; border-collapse: collapse; font-size: 9.5px; color: var(--r9-ink); align-self: start; }
+.r9-chart { width: 100%; border-collapse: collapse; font-size: 9.5px; color: var(--rack-ink); align-self: start; }
 .r9-chart th, .r9-chart td { border: 1px solid #4c4f52; padding: 2px 6px; text-align: left; line-height: 1.25; }
 .r9-chart th { font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; background: rgba(255,255,255,.04); }
 
@@ -445,16 +314,16 @@ button:focus-visible, .knob:focus-visible, .fader:focus-visible { outline: 2px s
 .r9-keys {
   display: grid; grid-template-columns: repeat(5, 46px); grid-auto-rows: 34px; gap: 7px;
   align-self: start; padding: 10px; border-radius: 3px;
-  background: var(--r9-block); box-shadow: inset 0 0 0 1px #2c2d2f;
+  background: var(--rack-block); box-shadow: inset 0 0 0 1px #2c2d2f;
 }
 .r9-key {
   padding: 0; border: 0; border-radius: 2px;
-  background: linear-gradient(#a4b1bf, var(--r9-key));
-  box-shadow: 0 2px 0 var(--r9-key-edge), 0 4px 6px rgba(0,0,0,.55);
+  background: linear-gradient(#a4b1bf, var(--rack-key));
+  box-shadow: 0 2px 0 var(--rack-key-edge), 0 4px 6px rgba(0,0,0,.55);
   color: #10161d; font-size: 14px; font-weight: 600; line-height: 1;
   touch-action: manipulation; transition: transform .04s, box-shadow .04s;
 }
-.r9-key.down { transform: translateY(2px); box-shadow: 0 0 0 var(--r9-key-edge), 0 1px 3px rgba(0,0,0,.55); }
+.r9-key.down { transform: translateY(2px); box-shadow: 0 0 0 var(--rack-key-edge), 0 1px 3px rgba(0,0,0,.55); }
 .r9-fn { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.15; }
 .r9-ent { grid-column: span 2; font-size: 11px; }
 
@@ -495,8 +364,8 @@ button:focus-visible, .knob:focus-visible, .fader:focus-visible { outline: 2px s
 }
 @media (max-width: 900px) {
   .rack { grid-template-columns: 14px minmax(0, 1fr) 14px; margin-top: 12px; }
-  .r9-ear { padding: 16px 0; }
-  .r9-ear i { width: 8px; height: 6px; }
+  .rack-ear { padding: 16px 0; }
+  .rack-ear i { width: 8px; height: 6px; }
   .r9-face {
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
@@ -525,11 +394,6 @@ button:focus-visible, .knob:focus-visible, .fader:focus-visible { outline: 2px s
   .r9-pow { justify-content: flex-end; }
   .r9-jacks { justify-content: flex-start; gap: 24px; }
 }
-
-/* ================================================================ MIDI Learn (SET-UP 22) */
-/* os controles que aprendem ficam tracejados; o escolhido acende */
-body.learning [data-learn] { outline: 1px dashed rgba(75, 138, 208, .6); outline-offset: 2px; }
-body.learning [data-learn].learn-sel { outline: 2px solid var(--rule); outline-offset: 3px; box-shadow: 0 0 14px 2px rgba(75, 138, 208, .75); }
 
 /* ================================================================ RJ-42: looper de rack embaixo do 950 */
 /* mesmo rack do 950; o que muda: LEDs vermelhos de 7 segmentos (como o Lexicon PCM42) e o jog */
@@ -564,7 +428,7 @@ body.learning [data-learn].learn-sel { outline: 2px solid var(--rule); outline-o
 .r42-modes { display: flex; flex-direction: column; gap: 7px; margin-left: auto; padding-top: 4px; }
 .r42-lr {
   display: flex; align-items: center; gap: 7px; padding: 1px 0; border: 0; background: none;
-  font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--r9-ink); text-align: left;
+  font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--rack-ink); text-align: left;
 }
 .r42-search { grid-area: search; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
 .r42-jog {
@@ -596,19 +460,19 @@ body.learning [data-learn].learn-sel { outline: 2px solid var(--rule); outline-o
 .r42-pow .kc { gap: 6px; }
 .r42-group { position: relative; border: 1px solid #4c4f52; border-radius: 3px; padding: 14px 10px 10px; display: flex; gap: 12px; align-items: flex-end; }
 .r42-gt {
-  position: absolute; top: -6px; left: 10px; padding: 0 6px; background: var(--r9-face);
+  position: absolute; top: -6px; left: 10px; padding: 0 6px; background: var(--rack-face);
   font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: #8e9093;
 }
 .r42-bk { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .r42-t {
   min-height: 20px; display: flex; align-items: flex-end; justify-content: center; gap: 5px; text-align: center;
-  font-size: 9px; line-height: 1.1; text-transform: uppercase; letter-spacing: .05em; color: var(--r9-ink);
+  font-size: 9px; line-height: 1.1; text-transform: uppercase; letter-spacing: .05em; color: var(--rack-ink);
 }
 .r42-t .led { margin-bottom: 1px; }
 .r42-bars { grid-area: bars; display: flex; gap: 14px; align-items: stretch; flex-wrap: wrap; }
 .r42-num-btn { color: #1c1b1a; font-size: 15px; font-weight: 700; }
 .r42-slots { display: grid; grid-template-columns: repeat(8, 18px); gap: 6px 4px; justify-items: center; }
-.r42-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--r9-ink); font-size: 9px; }
+.r42-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--rack-ink); font-size: 9px; }
 .r42-slot.sel span { color: #ff6a55; font-weight: 700; }
 .r42-slot.sel .led:not(.on) { box-shadow: 0 0 0 1px #ff3b26; }
 .r42-send { grid-area: send; display: flex; }

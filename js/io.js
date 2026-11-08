@@ -1,4 +1,4 @@
-/* RJ-2000 - entradas: microfone (sampling) e MIDI */
+/* RJ-2000 - entradas do SP: microfone (sampling) e o mapa MIDI padrao */
 window.RJ = window.RJ || {};
 
 /**
@@ -110,67 +110,31 @@ RJ.Sampler = class {
 };
 
 /**
- * MIDI (Chrome, Edge e Opera; Safari e Firefox tem suporte limitado).
- * Cada mensagem passa primeiro pelo MIDI Learn (onMessage). O que nao foi
- * aprendido segue o mapa padrao:
- * notas 36-67 tocam os 32 sons direto (36 = A1 ... 43 = A8, 44 = B1 ...).
+ * Mapa MIDI padrao do SP. A entrada MIDI e do host (core/js/midi.js); o SP so
+ * registra este mapa nela (midi.addDefaults(d => defs.route(d))).
+ * Notas 36-67 tocam os 32 sons direto (36 = A1 ... 43 = A8, 44 = B1 ...).
  * Assim o banco A de pads de um controlador (36-43) toca o banco A e o
  * banco B do controlador (44-51) toca o banco B.
  * CC 20-27 movem os sliders 1-8 no modo atual.
  * Depois que qualquer controle aprende uma mensagem, o mapa padrao desliga:
  * so vale o que foi aprendido, sem conflito.
  */
-RJ.Midi = class {
+RJ.SpMidiDefaults = class {
   constructor() {
-    this.access = null;
-    this.onMessage = null;
     this.onNote = null;
     this.onSlider = null;
-    this.onChange = null;
-    this.onLog = null;
     this.useDefaults = null;
-    this.inputs = [];
     this.channel = 1;
     this.omni = true;
   }
 
-  get supported() { return !!navigator.requestMIDIAccess; }
-
-  async enable() {
-    if (!this.supported) throw new Error("MIDI nao suportado neste navegador");
-    if (this.access) { this.bind(); return this.inputs; }
-    this.access = await navigator.requestMIDIAccess({ sysex: false });
-    this.bind();
-    this.access.onstatechange = () => { this.bind(); if (this.onChange) this.onChange(this.inputs); };
-    return this.inputs;
-  }
-
-  bind() {
-    this.inputs = [];
-    this.access.inputs.forEach(inp => {
-      inp.onmidimessage = (m) => this.handle(m.data);
-      this.inputs.push(inp.name);
-    });
-  }
-
-  /**
-   * Cada mensagem vai primeiro para o Learn; o que ele nao usar cai no mapa padrao,
-   * que so vale enquanto nada foi aprendido (useDefaults). onLog recebe o destino.
-   */
-  handle(d) {
-    if (!d || !d.length || (d[0] & 0xf0) === 0xf0) return; // clock, sysex, active sensing
-    const what = this.route(d);
-    if (this.onLog) this.onLog(d, what);
-  }
-
+  /** Devolve para onde a mensagem foi, ou null quando ela nao e do mapa (segue para "Not Mapped"). */
   route(d) {
-    const used = this.onMessage && this.onMessage(d);
-    if (used) return used;
     const st = d[0] & 0xf0;
     const isNote = st === 0x90 || st === 0x80, isCC = st === 0xb0;
     const n = d[1] - 36, i = d[1] - 20;
     const hit = (isNote && n >= 0 && n < 32) || (isCC && i >= 0 && i < 8);
-    if (!hit) return "Not Mapped";
+    if (!hit) return null;
     if (this.useDefaults && !this.useDefaults()) return "Off: Has Learn";
     if (!this.omni && (d[0] & 0x0f) !== this.channel - 1) return "Other Channel";
     const snd = "ABCD"[n >> 3] + ((n & 7) + 1);

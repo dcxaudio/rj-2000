@@ -29,14 +29,22 @@ Para rodar no seu computador, baixe o repositório e abra o `index.html` no nave
 ## Estrutura
 
 ```
-index.html          interface
-css/rj2000.css      visual
-js/dsp.js           reamostragem, redução para 12 bits, base64
-js/engine.js        motor de áudio (canais, filtros, afinação drop-sample)
+index.html          interface e o Studio (monta o rack: host e os três aparelhos)
+core/               código comum a todos os aparelhos (vai virar o dcx-core)
+  css/base.css      cores, fontes, teclas, LEDs, knobs, LCD e rack
+  fonts/            Archivo Narrow e VT323 (woff2, licença OFL junto)
+  js/dsp.js         reamostragem, redução de bits, WAV, base64
+  js/decode.js      decodificação de áudio (WAV, MP3...) para mono
+  js/store.js       armazenamento local (IndexedDB)
+  js/output.js      saída comum: AudioContext e limitador
+  js/midi.js        entrada MIDI (ignora as portas MCU/HUI/DAW)
+  js/midimap.js     MIDI Learn: mapa de mensagens MIDI para os controles
+  js/host.js        host: liga os aparelhos (saída, store, MIDI, envio entre eles)
+css/rj2000.css      visual do SP, do 950 e do 42
+js/engine.js        motor de áudio do SP (canais, filtros, afinação drop-sample)
 js/sequencer.js     sequenciador, auto correct, swing, song mode
 js/project.js       sons, memória, segmentos, songs, mixes, arquivos
-js/io.js            microfone e MIDI
-js/midimap.js       MIDI Learn: mapa de mensagens MIDI para os controles
+js/io.js            microfone (sampling) e o mapa MIDI padrão do SP
 js/s950.js          RJ-950: sampler de rack, memória, vozes, filtro e páginas
 js/r42.js           RJ-42: looper, detecção de BPM, time stretch, memórias e envio
 js/app.js           painel, LCD e páginas (Set-up, Disk, Sample)

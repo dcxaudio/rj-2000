@@ -29,7 +29,7 @@ window.RJ = window.RJ || {};
   const PROG_NAMES = ["Trigger/Metro", "Repeat/Swing", "Subsong/Copy", "End/Time Sig", "Insert/Length", "Delete/Erase", "TempoChg/AutoCor", "MixChg/StepProg"];
 
   class App {
-    /** host: a vista do host (js/host.js). O 950 e o 42 nao sao mais do SP: quem monta a pagina cria os tres. */
+    /** host: a vista do host (core/js/host.js). O 950 e o 42 nao sao mais do SP: quem monta a pagina cria os tres. */
     constructor(host) {
       this.host = host;
       this.p = RJ.createProject();
@@ -37,7 +37,10 @@ window.RJ = window.RJ || {};
       this.engine = new RJ.Engine(this.p, host.engine, () => host.output());
       this.seq = new RJ.Sequencer(this.p, this.engine);
       this.sampler = new RJ.Sampler(this.engine);
-      this.midi = new RJ.Midi();
+      // a entrada MIDI e do host; o SP so pendura o mapa padrao dele (notas 36-67, CC 20-27)
+      this.midi = host.midi;
+      this.midiDefs = new RJ.SpMidiDefaults();
+      this.midi.addDefaults(d => this.midiDefs.route(d));
       this.learn = host.learn;
       this.engine.levelOf = s => this.levelOf(s);
 
@@ -84,7 +87,7 @@ window.RJ = window.RJ || {};
       this.on = true;
       this.engine.ensure();
       $("#power").classList.add("off");
-      this.learn.load().then(() => { if (this.learn.enabled) this.enableMidi(); });
+      // o mapa MIDI e carregado pelo host em power(), que liga o MIDI se ja foi ligado antes
       const wait = ms => new Promise(r => setTimeout(r, ms));
       this.lcd(" RJ-2000  " + VERSION, " Insert Diskette");
       await wait(700);
@@ -221,14 +224,18 @@ window.RJ = window.RJ || {};
       this.sampler.onLevel = () => { if (this.page && this.page.module === "sample") this.renderLCD(); };
       this.sampler.onDone = (raw, rate, peak) => this.sampleDone(raw, rate, peak);
 
-      this.midi.onMessage = d => this.on && this.learn.handle(d);
-      this.midi.onNote = (n, vel, on) => { if (!this.on) return; if (on) this.hitSound(n, { vel: this.p.dynamic ? vel : 1 }); else this.host.emit("noteOff", n); };
-      this.midi.onSlider = (i, v) => { if (this.on) this.faderInput(i, v); };
-      this.midi.onChange = ins => { this.midiStatus = ins.length ? fit(ins[0], 16) : "No MIDI Input"; this.renderLCD(); };
+      // o Learn ja esta ligado na entrada pelo host (midi.onMessage)
+      this.midiDefs.onNote = (n, vel, on) => { if (!this.on) return; if (on) this.hitSound(n, { vel: this.p.dynamic ? vel : 1 }); else this.host.emit("noteOff", n); };
+      this.midiDefs.onSlider = (i, v) => { if (this.on) this.faderInput(i, v); };
+      this.midi.on("change", ins => {
+        this.applyMidiChannel();
+        this.midiStatus = this.midi.failed ? "MIDI Unavailable" : ins.length ? fit(ins[0], 16) : "No MIDI Input";
+        this.renderLCD();
+      });
       this.learn.onChange = () => this.renderLCD();
       // o mapa padrao so vale enquanto nada foi aprendido
-      this.midi.useDefaults = () => !this.learn.custom;
-      this.midi.onLog = (d, what) => this.logMidi(d, what);
+      this.midiDefs.useDefaults = () => !this.learn.custom;
+      this.midi.on("log", (d, what) => this.logMidi(d, what));
       this.midiLog = [];
       // no console do navegador (nivel Verbose): RJ.midiLog() devolve o registro inteiro
       RJ.midiLog = () => this.midiLog.join("\n");
@@ -1551,14 +1558,8 @@ window.RJ = window.RJ || {};
 
     /** Liga o MIDI do navegador. Depois da primeira vez, liga sozinho a cada boot. */
     async enableMidi() {
-      try {
-        const ins = await this.midi.enable();
-        this.applyMidiChannel();
-        this.midiStatus = ins.length ? fit(ins[0], 16) : "No MIDI Input";
-        if (!this.learn.enabled) { this.learn.enabled = true; this.learn.persist(); }
-      } catch (e) {
-        this.midiStatus = "MIDI Unavailable";
-      }
+      // a entrada e do host; o status do LCD e o canal vem pelo midi.on("change")
+      try { await this.host.enableMidi(); } catch (e) { this.midiStatus = "MIDI Unavailable"; }
       this.renderLCD();
     }
 
@@ -1613,8 +1614,8 @@ window.RJ = window.RJ || {};
 
     /** Canal do mapa padrao (notas 36-67 e CC 20-27). O que foi aprendido ja traz o canal. */
     applyMidiChannel() {
-      this.midi.channel = this.p.midi.channel;
-      this.midi.omni = this.p.midi.mode === "omni";
+      this.midiDefs.channel = this.p.midi.channel;
+      this.midiDefs.omni = this.p.midi.mode === "omni";
     }
 
     midiChannelPage() {
