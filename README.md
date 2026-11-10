@@ -87,3 +87,10 @@ Ideias, bugs e melhorias são bem-vindos nas [issues](https://github.com/dcxaudi
 Código sob a [GNU GPL v3.0](LICENSE). O kit padrão está sob CC BY 4.0 e CC0 (créditos em `samples/boom-bap-01/LICENSE.txt`); o DCX Kit 01 está em CC0.
 
 SP-1200 e S950 são marcas de seus respectivos donos. O RJ-2000 e o RJ-950 são projetos independentes, sem relação com a E-mu Systems, a Creative, a Rossum Electro-Music ou a Akai.
+
+
+---
+
+Projeto independente, sem vínculo com os fabricantes dos equipamentos que inspiraram as máquinas. Os nomes SP-1200, SP-404, S950 e 1202 pertencem a seus donos e aparecem só em texto, como referência.
+
+*Independent project, not affiliated with the makers of the gear that inspired the machines; names belong to their owners and appear as text only, for reference.*
