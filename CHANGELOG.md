@@ -2,6 +2,7 @@
 
 ## Próxima
 
+- `core/js/output.js`: mesma correção do dcx-core: o religar do `statechange` espera 400 ms (resume no meio da troca de saída deixava o contexto parado, sem som).
 - Auditoria 2000-4 (P0-03): no celular, as teclas de carregar arquivo (DISK, SAMPLE 8, Load MIDI Learn) abrem o seletor no fim do toque (`touchend`/`click`, não mais no `pointerup`, que no iPhone não vale como gesto) e desistem em 3 s; com mouse ou teclado continua abrindo na hora, como antes.
 - Auditoria 2000-2 (P0-06): quando o navegador não consegue guardar o projeto (cota cheia, banco com erro), o LCD avisa uma vez *Memory Not Saved / Use Disk to Save*, sem cortar outro aviso em curso. Antes a falha era muda.
 - Auditoria 2000-1 (P0-05): ligar não grava mais um projeto vazio por cima do salvo. O salvamento automático só vale depois de a leitura do boot terminar bem (flag `loaded`); se a leitura falha (com `getStrict` do core novo), nada é gravado; se o salvo está ilegível, o valor bruto vai para `autosave-bad` e o fim do boot não grava.

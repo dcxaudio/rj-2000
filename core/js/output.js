@@ -61,7 +61,9 @@ window.RJ = window.RJ || {};
       const retry = () => { if (this.ctx === ctx && this.active()) this.wake(); };
       document.addEventListener("visibilitychange", () => { if (!document.hidden) retry(); });
       window.addEventListener("pageshow", retry);
-      if (ctx.addEventListener) ctx.addEventListener("statechange", () => { if (!document.hidden) retry(); });
+      // com atraso: ao trocar a saida (setSinkId) o contexto para por um instante, e um resume() no meio da troca
+      // deixava o contexto "running" com o relogio parado (sem som); esperar a troca acabar evita isso
+      if (ctx.addEventListener) ctx.addEventListener("statechange", () => { if (!document.hidden) setTimeout(retry, 400); });
       const opt = { capture: true, passive: true };
       ["pointerdown", "touchend", "keydown"].forEach(t => document.addEventListener(t, retry, opt));
     }
