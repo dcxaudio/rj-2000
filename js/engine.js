@@ -46,7 +46,12 @@ RJ.Engine = class {
       this.graph = this.buildGraph(this.ctx);
       if (this.pendingBanks) { this.pendingBanks.forEach((on, b) => this.setBankRouted(b, on)); this.pendingBanks = null; }
     }
-    if (this.ctx.state === "suspended") this.ctx.resume();
+    // religa em qualquer estado parado ("suspended" ou o "interrupted" do iPhone), como o RJ.Output do core;
+    // com o core antigo (sem wake), faz o mesmo aqui
+    if (this.output.wake) this.output.wake();
+    else if (this.ctx.state !== "running" && this.ctx.state !== "closed") {
+      try { const p = this.ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* tenta no proximo */ }
+    }
     return this.ctx;
   }
 

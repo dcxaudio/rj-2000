@@ -200,7 +200,8 @@
       if (t.kind === "button" || t.kind === "pad") {
         // program change ou encoder: cada mensagem e um toque
         if (m.type === "pc" || d != null) { this.release(t); this.press(t, 1); this.release(t); this.blink(t); return; }
-        if (m.type === "note") { if (m.on) this.press(t, m.v); else this.release(t); return; }
+        // note-on solta antes de apertar (como o CC), para um botao nao ficar preso
+        if (m.type === "note") { if (m.on) { this.release(t); this.press(t, m.v); } else this.release(t); return; }
         // CC: 64 ou mais aperta, menos solta. Um botao que so manda 127 aperta de novo a cada toque.
         if (m.v >= 0.5) { this.release(t); this.press(t, 1); } else this.release(t);
         return;

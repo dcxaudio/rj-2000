@@ -135,15 +135,60 @@ RJ.dsp = (function () {
     return out;
   }
 
+  /** Aparelho de toque (celular/tablet): so ai o salvar usa a folha de compartilhar. */
+  function touchDevice() {
+    try { return navigator.maxTouchPoints > 0 && window.matchMedia("(pointer: coarse)").matches; } catch (e) { return false; }
+  }
+
+  /** Download por link: true se o navegador aceitou o clique, false se deu erro. */
+  function anchorDownload(blob, filename) {
+    let url = null;
+    try {
+      url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // 60 s: no iPhone o usuario pode demorar a confirmar o download
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return true;
+    } catch (e) {
+      console.warn("Nao foi possivel baixar o arquivo", e);
+      if (url) setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return false;
+    }
+  }
+
+  /**
+   * Salva um arquivo. Devolve true/false (download por link, como no desktop) ou
+   * uma Promise de true/false quando usa o gancho do app ou a folha de compartilhar;
+   * quem chama pode sempre usar await.
+   *   RJ.saveHook(blob, nome)  opcional, do app (WebView): devolve true/false ou
+   *                            Promise; devolver null/undefined deixa o caminho normal.
+   *   Aparelho de toque com gesto recente e navigator.share com arquivo: abre a folha
+   *   de compartilhar (cancelar devolve false). No desktop nada muda.
+   */
   function downloadBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    const RJ = window.RJ || {};
+    if (typeof RJ.saveHook === "function") {
+      let r;
+      try { r = RJ.saveHook(blob, filename); } catch (e) { console.warn("saveHook falhou", e); return false; }
+      if (r != null) return Promise.resolve(r).then(v => !!v, e => { console.warn("saveHook falhou", e); return false; });
+    }
+    const gesture = navigator.userActivation ? navigator.userActivation.isActive : false;
+    if (touchDevice() && gesture && navigator.share && navigator.canShare && typeof File === "function") {
+      let file = null;
+      try { file = new File([blob], filename, { type: blob.type || "application/octet-stream" }); } catch (e) { file = null; }
+      if (file && navigator.canShare({ files: [file] })) {
+        return navigator.share({ files: [file], title: filename }).then(() => true, e => {
+          if (e && e.name === "AbortError") return false;   // o usuario cancelou
+          return anchorDownload(blob, filename);
+        });
+      }
+    }
+    return anchorDownload(blob, filename);
   }
 
   return { toMono, resample, quantize, process, peak, encodeWav,

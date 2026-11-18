@@ -29,6 +29,10 @@
  *   emit(tipo, ...) / listen(tipo, fn)   recado entre aparelhos sem um conhecer o outro.
  *                   Tipos de hoje: "note" (s, time, vel), "noteOff" (s), "stop", "key" (KeyboardEvent).
  *                   emit devolve true se algum ouvinte devolveu true.
+ *                   O host emite "bootError" (id, erro) quando o boot de um aparelho falha.
+ *   setPlaying(b)   opcional: o aparelho avisa que comecou (true) ou parou (false) de tocar.
+ *                   Enquanto algum aparelho toca, a pagina pede uma trava de tela unica
+ *                   (navigator.wakeLock), para a tela nao apagar e cortar o som.
  */
 (function () {
   "use strict";
@@ -43,6 +47,7 @@
       prefix,
       key: k => prefix + k,
       async get(k) { await wait(); return RJ.store.get(prefix + k); },
+      async getStrict(k) { await wait(); return RJ.store.getStrict(prefix + k); },
       async put(k, v) { await wait(); return RJ.store.put(prefix + k, v); },
     };
   };
@@ -80,11 +85,14 @@
       this.page = opts.page || "studio";
       this.ready = RJ.migrateStore(this.page, opts.migrate);
       this.engine = new RJ.Output();
+      this.engine.active = () => this.on;   // so religa o som sozinho com a regua ligada
       this.store = RJ.prefixedStore(this.page + "/", this.ready);
       this.learn = new RJ.MidiMap(this.store);
       // a entrada MIDI e da pagina: o Learn vem primeiro, depois os mapas padrao dos aparelhos
       this.midi = new RJ.Midi({ ignore: opts.midiIgnore });
       this.midi.onMessage = d => this.on && this.learn.handle(d);
+      // controlador caiu com um botao aprendido apertado: solta tudo
+      this.midi.on("disconnect", () => this.learn.releaseAll());
       this.on = false;
       this.devices = new Map();   // id -> { dev, label, receive }
       this.outs = new Map();
@@ -92,7 +100,14 @@
       this.listeners = {};
       this.playing = opts.playing || (() => false);
       this.padUsed = opts.padUsed || (() => false);
-      document.addEventListener("visibilitychange", () => { if (document.hidden) this.saveAll(); });
+      this.playingIds = new Set();   // aparelhos que avisaram setPlaying(true)
+      this.wakeLock = null;
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) this.saveAll();
+        else this.syncWakeLock();   // o navegador solta a trava quando a pagina some
+      });
+      // pagehide: recarregar ou fechar a aba nem sempre passa pelo visibilitychange
+      window.addEventListener("pagehide", () => this.saveAll());
     }
 
     /** Pagina com um aparelho so: targets() devolve so "file". */
@@ -109,8 +124,45 @@
       if (this.on) return;
       this.on = true;
       this.engine.ensure();
+      // pedido de armazenamento persistente, dentro do gesto de ligar (o Safari apaga sem isso)
+      try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) { /* sem suporte */ }
       this.learn.load().then(() => { if (this.learn.enabled) this.enableMidi().catch(() => {}); });
-      this.devices.forEach(d => d.dev.boot && d.dev.boot());
+      this.devices.forEach((d, id) => {
+        if (!d.dev.boot) return;
+        const fail = e => { console.error("Boot do aparelho " + id + " falhou", e); this.emit("bootError", id, e); };
+        try {
+          const r = d.dev.boot();
+          if (r && typeof r.catch === "function") r.catch(fail);
+        } catch (e) { fail(e); }
+      });
+      this.syncWakeLock();
+    }
+
+    /* ---------------------------------------------- trava de tela */
+
+    /** Opcional: o aparelho id comecou ou parou de tocar. */
+    setPlaying(id, on) {
+      if (on) this.playingIds.add(id); else this.playingIds.delete(id);
+      this.syncWakeLock();
+    }
+
+    /** Uma trava so para a pagina: pede enquanto algo toca e a pagina esta visivel, solta quando nada toca. */
+    syncWakeLock() {
+      const want = this.on && this.playingIds.size > 0 && !document.hidden;
+      if (want && !this.wakeLock && navigator.wakeLock && navigator.wakeLock.request) {
+        this.wakeLock = "pending";
+        let p;
+        try { p = navigator.wakeLock.request("screen"); } catch (e) { this.wakeLock = null; return; }
+        p.then(lock => {
+          if (this.wakeLock !== "pending") { lock.release().catch(() => {}); return; }
+          this.wakeLock = lock;
+          lock.addEventListener("release", () => { if (this.wakeLock === lock) this.wakeLock = null; });
+        }, () => { if (this.wakeLock === "pending") this.wakeLock = null; });
+      } else if (!want && this.wakeLock && !(this.playingIds.size > 0 && document.hidden)) {
+        const lock = this.wakeLock;
+        this.wakeLock = null;
+        if (lock !== "pending") lock.release().catch(() => {});
+      }
     }
 
     /** Liga o MIDI do navegador. Depois da primeira vez, liga sozinho a cada power(). */
@@ -212,6 +264,7 @@
         padUsed: i => h.padUsed(i),
         emit: (t, ...a) => h.emit(t, ...a),
         listen: (t, fn) => h.listen(t, fn),
+        setPlaying: b => h.setPlaying(id, !!b),
       };
     }
   };

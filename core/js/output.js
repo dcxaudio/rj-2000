@@ -21,17 +21,49 @@ window.RJ = window.RJ || {};
     return lim;
   };
 
+  /**
+   * Tipo da sessao de audio do iPhone (Safari 16.4+): "playback" toca mesmo com a
+   * chave de silencioso; "play-and-record" enquanto o microfone esta aberto.
+   * Onde nao existe, nao faz nada.
+   */
+  RJ.setAudioSession = function (type) {
+    try { if (navigator.audioSession) navigator.audioSession.type = type; } catch (e) { /* sem suporte */ }
+  };
+
   RJ.Output = class {
-    constructor() { this.ctx = null; this.limiter = null; }
+    constructor() {
+      this.ctx = null; this.limiter = null;
+      // quem cria a saida diz se a maquina esta ligada (o host troca por () => host.on)
+      this.active = () => true;
+    }
     ensure() {
       if (!this.ctx) {
         const AC = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AC({ latencyHint: "interactive" });
         this.limiter = RJ.makeLimiter(this.ctx);
         this.limiter.connect(this.ctx.destination);
+        RJ.setAudioSession("playback");
+        this.watch(this.ctx);
       }
-      if (this.ctx.state === "suspended") this.ctx.resume();
+      this.wake();
       return this.ctx;
+    }
+    /** Religa o contexto se nao estiver tocando ("suspended" ou o "interrupted" do iPhone). */
+    wake() {
+      const c = this.ctx;
+      if (!c || c.state === "running" || c.state === "closed") return;
+      try { const p = c.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* tenta no proximo */ }
+    }
+    /** Uma vez por contexto: volta o som ao voltar para a pagina, ao mudar o estado e no proximo toque ou tecla. */
+    watch(ctx) {
+      if (ctx.rjWatched) return;
+      ctx.rjWatched = true;
+      const retry = () => { if (this.ctx === ctx && this.active()) this.wake(); };
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) retry(); });
+      window.addEventListener("pageshow", retry);
+      if (ctx.addEventListener) ctx.addEventListener("statechange", () => { if (!document.hidden) retry(); });
+      const opt = { capture: true, passive: true };
+      ["pointerdown", "touchend", "keydown"].forEach(t => document.addEventListener(t, retry, opt));
     }
     get ready() { return !!this.ctx; }
   };

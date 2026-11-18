@@ -9,6 +9,8 @@
  *   3. se ninguem usou: "Not Mapped".
  * on("log", fn) recebe (mensagem, destino) e on("change", fn) recebe a lista de
  * entradas sempre que ela muda (ao ligar e ao plugar ou tirar um aparelho).
+ * on("disconnect", fn) recebe o nome de uma entrada que caiu (o host solta os
+ * botoes aprendidos que estavam apertados).
  */
 window.RJ = window.RJ || {};
 
@@ -33,7 +35,7 @@ RJ.Midi = class {
     this.ignore = opts.ignore || null;
     this.onMessage = null;
     this.defaults = [];
-    this.listeners = { change: [], log: [] };
+    this.listeners = { change: [], log: [], disconnect: [] };
     this.inputs = [];     // nomes das entradas ouvidas
     this.ignored = [];    // nomes das entradas ignoradas
     this.failed = false;  // o navegador nao deu acesso ao MIDI
@@ -59,7 +61,12 @@ RJ.Midi = class {
       if (!this.supported) throw new Error("MIDI nao suportado neste navegador");
       if (!this.access) {
         this.access = await navigator.requestMIDIAccess({ sysex: false });
-        this.access.onstatechange = () => { this.bind(); this.emit("change", this.inputs); };
+        this.access.onstatechange = (ev) => {
+          const p = ev && ev.port;
+          this.bind();
+          this.emit("change", this.inputs);
+          if (p && p.type === "input" && p.state === "disconnected") this.emit("disconnect", p.name);
+        };
       }
       this.failed = false;
       this.bind();
