@@ -58,6 +58,7 @@ window.RJ = window.RJ || {};
       this.pos = null;
       this.sliderShowUntil = 0;
       this.on = false;
+      this.loaded = false;     // so salva depois de a leitura do boot terminar bem (P0-05)
     }
 
     /* =========================================================== montagem */
@@ -94,11 +95,20 @@ window.RJ = window.RJ || {};
       await wait(700);
       this.lcd(" RJ-2000  " + VERSION, "Loading Software");
       await wait(450);
-      let restored = false;
+      let restored = false, readFailed = false, saved = null, backup = null;
+      const st = this.host.store;
       try {
-        const saved = await this.host.store.get("autosave");
-        if (saved) { this.useProject(RJ.deserialize(saved)); restored = true; }
-      } catch (e) { console.warn("Autosave de outra versao, carregando o kit padrao", e); }
+        // getStrict (core novo) separa erro de leitura de "nao existe"; o core antigo so tem get
+        saved = st.getStrict ? await st.getStrict("autosave") : await st.get("autosave");
+      } catch (e) { readFailed = true; console.warn("Nao foi possivel ler o projeto salvo; nada sera gravado por cima", e); }
+      if (saved) {
+        try { this.useProject(RJ.deserialize(saved)); restored = true; } catch (e) {
+          readFailed = true;
+          console.warn("Autosave ilegivel ou de outra versao: copiado para autosave-bad, carregando o kit padrao", e);
+          // guarda o valor bruto; so depois de guardado o salvamento automatico pode voltar a gravar "autosave"
+          backup = Promise.resolve(st.put("autosave-bad", saved)).then(ok => ok !== false, () => false);
+        }
+      }
       this.lcd(" RJ-2000  " + VERSION, "Loading Sequences");
       await wait(350);
       this.lcd(" RJ-2000  " + VERSION, "Loading Sounds");
@@ -109,7 +119,10 @@ window.RJ = window.RJ || {};
       await wait(300);
       this.engine.applyVolumes();
       this.refreshAll();
-      this.saveNow();
+      // leitura falhou: nao grava o projeto vazio por cima do que estava salvo
+      if (!readFailed) { this.loaded = true; this.saveNow(); }
+      // salvo ilegivel ja copiado para autosave-bad: as proximas mudancas voltam a ser salvas
+      else if (backup && await backup) this.loaded = true;
     }
 
     useProject(np) {
@@ -1687,7 +1700,7 @@ window.RJ = window.RJ || {};
 
     saveNow() {
       clearTimeout(this.saveTimer);
-      if (!this.on || !this.engine.ready) return;
+      if (!this.on || !this.engine.ready || !this.loaded) return;
       try { this.host.store.put("autosave", RJ.serialize(this.p)); } catch (e) { console.warn(e); }
     }
 
