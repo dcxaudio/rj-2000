@@ -1701,7 +1701,23 @@ window.RJ = window.RJ || {};
     saveNow() {
       clearTimeout(this.saveTimer);
       if (!this.on || !this.engine.ready || !this.loaded) return;
-      try { this.host.store.put("autosave", RJ.serialize(this.p)); } catch (e) { console.warn(e); }
+      let r;
+      try { r = this.host.store.put("autosave", RJ.serialize(this.p)); } catch (e) { console.warn(e); this.warnNotSaved(); return; }
+      // o put devolve false (ou rejeita) quando o navegador nao gravou: avisa uma vez no LCD (P0-06)
+      Promise.resolve(r).then(ok => { if (ok === false) this.warnNotSaved(); }, e => { console.warn(e); this.warnNotSaved(); });
+    }
+
+    /** Uma vez por sessao; espera o aviso que estiver no LCD terminar. */
+    warnNotSaved() {
+      if (this.saveWarned) return;
+      this.saveWarned = true;
+      const show = () => {
+        if (!this.on) return;
+        const left = this.flashUntil - performance.now();
+        if (left > 0) { setTimeout(show, left + 50); return; }
+        this.flash("Memory Not Saved", "Use Disk to Save", 3000);
+      };
+      show();
     }
 
     /* =========================================================== desenho */
