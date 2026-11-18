@@ -1377,9 +1377,21 @@ window.RJ = window.RJ || {};
       inp.accept = accept;
       inp.multiple = multiple;
       this.onFiles = fn;
-      // no celular o seletor de arquivos so abre no fim do toque
+      // iOS/Safari so abre o seletor se inp.click() rodar no fim do toque (touchend ou click); as teclas
+      // e os pads disparam no pointerdown, que la nao vale, e o pointerup chega antes do touchend (P0-03).
+      // No toque espera o touchend/click do mesmo toque e desiste em 3 s; com mouse (ou tecla) abre na hora.
       const ua = navigator.userActivation;
-      if (ua && !ua.isActive) window.addEventListener("pointerup", () => inp.click(), { once: true });
+      const ev = window.event;
+      const touch = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches) && !(ev && ev.type === "keydown");
+      if (touch) {
+        let done = false, tm = 0;
+        const evs = ["touchend", "click"];
+        const stop = () => { done = true; clearTimeout(tm); evs.forEach(n => window.removeEventListener(n, open, true)); window.removeEventListener("touchcancel", stop, true); };
+        const open = () => { if (done) return; stop(); try { inp.click(); } catch (e) { console.warn(e); } };
+        evs.forEach(n => window.addEventListener(n, open, true));
+        window.addEventListener("touchcancel", stop, true);
+        tm = setTimeout(stop, 3000);
+      } else if (ua && !ua.isActive) window.addEventListener("pointerup", () => inp.click(), { once: true });
       else inp.click();
     }
 

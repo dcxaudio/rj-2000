@@ -2,6 +2,7 @@
 
 ## Próxima
 
+- Auditoria 2000-4 (P0-03): no celular, as teclas de carregar arquivo (DISK, SAMPLE 8, Load MIDI Learn) abrem o seletor no fim do toque (`touchend`/`click`, não mais no `pointerup`, que no iPhone não vale como gesto) e desistem em 3 s; com mouse ou teclado continua abrindo na hora, como antes.
 - Auditoria 2000-2 (P0-06): quando o navegador não consegue guardar o projeto (cota cheia, banco com erro), o LCD avisa uma vez *Memory Not Saved / Use Disk to Save*, sem cortar outro aviso em curso. Antes a falha era muda.
 - Auditoria 2000-1 (P0-05): ligar não grava mais um projeto vazio por cima do salvo. O salvamento automático só vale depois de a leitura do boot terminar bem (flag `loaded`); se a leitura falha (com `getStrict` do core novo), nada é gravado; se o salvo está ilegível, o valor bruto vai para `autosave-bad` e o fim do boot não grava.
 - Auditoria 2000-0 (P0-01): `core/` sincronizado com as correções do dcx-core (saída religa o som em qualquer estado parado e ao voltar à página, sessão de áudio playback; `store.put` não fica pendurado e `getStrict` novo; `downloadBlob` com retorno; host com `storage.persist`, `pagehide` e `.catch` no boot; MIDI solta botões ao cair; CSS de toque). Só as mudanças da auditoria, sem trazer outras diferenças do core. `Engine.ensure` religa igual ao core e funciona também com o core antigo. `?v=a1` nas tags alteradas.
